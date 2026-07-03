@@ -33,30 +33,32 @@ const selectClass =
 
         <Form
             v-bind="CursoController.store.form()"
-            class="max-w-2xl space-y-6"
+            class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
-                <Label for="ciclo_lectivo_id">Ciclo lectivo</Label>
-                <select
-                    id="ciclo_lectivo_id"
-                    name="ciclo_lectivo_id"
-                    required
-                    :class="selectClass"
-                >
-                    <option value="" disabled selected>Seleccionar...</option>
-                    <option
-                        v-for="ciclo in ciclosLectivos"
-                        :key="ciclo.id"
-                        :value="ciclo.id"
+            <div class="grid grid-cols-4 gap-4">
+                <div class="grid gap-2">
+                    <Label for="ciclo_lectivo_id">Ciclo lectivo</Label>
+                    <select
+                        id="ciclo_lectivo_id"
+                        name="ciclo_lectivo_id"
+                        required
+                        :class="selectClass"
                     >
-                        {{ ciclo.anio }}
-                    </option>
-                </select>
-                <InputError :message="errors.ciclo_lectivo_id" />
-            </div>
+                        <option value="" disabled selected>
+                            Seleccionar...
+                        </option>
+                        <option
+                            v-for="ciclo in ciclosLectivos"
+                            :key="ciclo.id"
+                            :value="ciclo.id"
+                        >
+                            {{ ciclo.anio }}
+                        </option>
+                    </select>
+                    <InputError :message="errors.ciclo_lectivo_id" />
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
                 <div class="grid gap-2">
                     <Label for="anio">Año</Label>
                     <select id="anio" name="anio" required :class="selectClass">
@@ -75,17 +77,17 @@ const selectClass =
                     <Input id="division" name="division" required />
                     <InputError :message="errors.division" />
                 </div>
-            </div>
 
-            <div class="grid gap-2">
-                <Label for="turno">Turno</Label>
-                <select id="turno" name="turno" :class="selectClass">
-                    <option value="">Sin especificar</option>
-                    <option value="mañana">Mañana</option>
-                    <option value="tarde">Tarde</option>
-                    <option value="noche">Noche</option>
-                </select>
-                <InputError :message="errors.turno" />
+                <div class="grid gap-2">
+                    <Label for="turno">Turno</Label>
+                    <select id="turno" name="turno" :class="selectClass">
+                        <option value="">Sin especificar</option>
+                        <option value="mañana">Mañana</option>
+                        <option value="tarde">Tarde</option>
+                        <option value="noche">Noche</option>
+                    </select>
+                    <InputError :message="errors.turno" />
+                </div>
             </div>
 
             <div class="flex items-center gap-4">

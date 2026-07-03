@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
+import CursoAlumnoController from '@/actions/App/Http/Controllers/CursoAlumnoController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import CursoMateriaController from '@/actions/App/Http/Controllers/CursoMateriaController';
 import Heading from '@/components/Heading.vue';
@@ -16,7 +17,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { CicloLectivo, Curso, Materia, Profesor } from '@/types';
+import { useDateFormat } from '@/composables/useDateFormat';
+import type { Alumno, CicloLectivo, Curso, Materia, Profesor } from '@/types';
 
 type MateriaAsignada = Pick<Materia, 'id' | 'nombre'> & {
     pivot: { profesor_id: number | null };
@@ -24,11 +26,24 @@ type MateriaAsignada = Pick<Materia, 'id' | 'nombre'> & {
 
 type ProfesorOption = Pick<Profesor, 'id' | 'nombre' | 'apellido'>;
 
+type AlumnoOption = Pick<Alumno, 'id' | 'nombre' | 'apellido'>;
+
+type AlumnoMatriculado = AlumnoOption & {
+    pivot: {
+        fecha_matriculacion: string;
+        estado: 'activo' | 'baja' | 'egresado';
+    };
+};
+
 const props = defineProps<{
-    curso: Curso & { materias: MateriaAsignada[] };
+    curso: Curso & {
+        materias: MateriaAsignada[];
+        alumnos: AlumnoMatriculado[];
+    };
     ciclosLectivos: CicloLectivo[];
     materiasDisponibles: Pick<Materia, 'id' | 'nombre'>[];
     profesoresActivos: ProfesorOption[];
+    alumnosDisponibles: AlumnoOption[];
 }>();
 
 defineOptions({
@@ -52,6 +67,20 @@ function onProfesorChange(materiaId: number, event: Event) {
         { preserveScroll: true },
     );
 }
+
+function onEstadoChange(alumnoId: number, event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+
+    router.patch(
+        CursoAlumnoController.update.url([props.curso.id, alumnoId]),
+        { estado: value },
+        { preserveScroll: true },
+    );
+}
+
+const today = new Date().toISOString().slice(0, 10);
+
+const { formatDate } = useDateFormat();
 </script>
 
 <template>
@@ -65,30 +94,30 @@ function onProfesorChange(materiaId: number, event: Event) {
 
         <Form
             v-bind="CursoController.update.form(curso.id)"
-            class="max-w-2xl space-y-6"
+            class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
-                <Label for="ciclo_lectivo_id">Ciclo lectivo</Label>
-                <select
-                    id="ciclo_lectivo_id"
-                    name="ciclo_lectivo_id"
-                    required
-                    :value="curso.ciclo_lectivo_id"
-                    :class="selectClass"
-                >
-                    <option
-                        v-for="ciclo in props.ciclosLectivos"
-                        :key="ciclo.id"
-                        :value="ciclo.id"
+            <div class="grid grid-cols-4 gap-4">
+                <div class="grid gap-2">
+                    <Label for="ciclo_lectivo_id">Ciclo lectivo</Label>
+                    <select
+                        id="ciclo_lectivo_id"
+                        name="ciclo_lectivo_id"
+                        required
+                        :value="curso.ciclo_lectivo_id"
+                        :class="selectClass"
                     >
-                        {{ ciclo.anio }}
-                    </option>
-                </select>
-                <InputError :message="errors.ciclo_lectivo_id" />
-            </div>
+                        <option
+                            v-for="ciclo in props.ciclosLectivos"
+                            :key="ciclo.id"
+                            :value="ciclo.id"
+                        >
+                            {{ ciclo.anio }}
+                        </option>
+                    </select>
+                    <InputError :message="errors.ciclo_lectivo_id" />
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
                 <div class="grid gap-2">
                     <Label for="anio">Año</Label>
                     <select
@@ -115,22 +144,22 @@ function onProfesorChange(materiaId: number, event: Event) {
                     />
                     <InputError :message="errors.division" />
                 </div>
-            </div>
 
-            <div class="grid gap-2">
-                <Label for="turno">Turno</Label>
-                <select
-                    id="turno"
-                    name="turno"
-                    :value="curso.turno ?? ''"
-                    :class="selectClass"
-                >
-                    <option value="">Sin especificar</option>
-                    <option value="mañana">Mañana</option>
-                    <option value="tarde">Tarde</option>
-                    <option value="noche">Noche</option>
-                </select>
-                <InputError :message="errors.turno" />
+                <div class="grid gap-2">
+                    <Label for="turno">Turno</Label>
+                    <select
+                        id="turno"
+                        name="turno"
+                        :value="curso.turno ?? ''"
+                        :class="selectClass"
+                    >
+                        <option value="">Sin especificar</option>
+                        <option value="mañana">Mañana</option>
+                        <option value="tarde">Tarde</option>
+                        <option value="noche">Noche</option>
+                    </select>
+                    <InputError :message="errors.turno" />
+                </div>
             </div>
 
             <div class="flex items-center gap-4">
@@ -144,7 +173,7 @@ function onProfesorChange(materiaId: number, event: Event) {
             </div>
         </Form>
 
-        <div class="max-w-2xl space-y-4 border-t pt-6">
+        <div class="max-w-5xl space-y-4 border-t pt-6">
             <Heading
                 variant="small"
                 title="Materias asignadas"
@@ -294,6 +323,155 @@ function onProfesorChange(materiaId: number, event: Event) {
             </Form>
             <p v-else class="text-sm text-muted-foreground">
                 Todas las materias ya están asignadas a este curso.
+            </p>
+        </div>
+
+        <div class="max-w-5xl space-y-4 border-t pt-6">
+            <Heading
+                variant="small"
+                title="Alumnos matriculados"
+                description="Alumnos inscriptos en este curso"
+            />
+
+            <div class="overflow-hidden rounded-md border">
+                <table class="w-full text-sm">
+                    <thead class="bg-muted/50 text-left">
+                        <tr>
+                            <th class="px-4 py-2 font-medium">Alumno</th>
+                            <th class="px-4 py-2 font-medium">
+                                Fecha matriculación
+                            </th>
+                            <th class="px-4 py-2 font-medium">Estado</th>
+                            <th class="px-4 py-2 font-medium">
+                                <span class="sr-only">Acciones</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="alumno in curso.alumnos"
+                            :key="alumno.id"
+                            class="border-t"
+                        >
+                            <td class="px-4 py-2">
+                                {{ alumno.apellido }}, {{ alumno.nombre }}
+                            </td>
+                            <td class="px-4 py-2">
+                                {{
+                                    formatDate(alumno.pivot.fecha_matriculacion)
+                                }}
+                            </td>
+                            <td class="px-4 py-2">
+                                <select
+                                    :value="alumno.pivot.estado"
+                                    class="h-8 w-full max-w-xs rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    @change="onEstadoChange(alumno.id, $event)"
+                                >
+                                    <option value="activo">Activo</option>
+                                    <option value="baja">Baja</option>
+                                    <option value="egresado">Egresado</option>
+                                </select>
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                <Dialog>
+                                    <DialogTrigger as-child>
+                                        <Button variant="destructive" size="sm">
+                                            Quitar
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <Form
+                                            v-bind="
+                                                CursoAlumnoController.destroy.form(
+                                                    [curso.id, alumno.id],
+                                                )
+                                            "
+                                            :options="{ preserveScroll: true }"
+                                            v-slot="{ processing: removing }"
+                                        >
+                                            <DialogHeader class="space-y-3">
+                                                <DialogTitle>
+                                                    ¿Quitar la matrícula de
+                                                    {{ alumno.nombre }}
+                                                    {{ alumno.apellido }} en
+                                                    este curso?
+                                                </DialogTitle>
+                                            </DialogHeader>
+
+                                            <DialogFooter class="mt-6 gap-2">
+                                                <DialogClose as-child>
+                                                    <Button variant="secondary">
+                                                        Cancelar
+                                                    </Button>
+                                                </DialogClose>
+
+                                                <Button
+                                                    type="submit"
+                                                    variant="destructive"
+                                                    :disabled="removing"
+                                                >
+                                                    Quitar
+                                                </Button>
+                                            </DialogFooter>
+                                        </Form>
+                                    </DialogContent>
+                                </Dialog>
+                            </td>
+                        </tr>
+                        <tr v-if="curso.alumnos.length === 0">
+                            <td
+                                colspan="4"
+                                class="px-4 py-6 text-center text-muted-foreground"
+                            >
+                                Todavía no hay alumnos matriculados.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <Form
+                v-if="alumnosDisponibles.length > 0"
+                v-bind="CursoAlumnoController.store.form(curso.id)"
+                :options="{ preserveScroll: true }"
+                class="flex items-end gap-2"
+                v-slot="{ errors, processing: matriculando }"
+            >
+                <div class="grid flex-1 gap-2">
+                    <Label for="alumno_id">Alumno</Label>
+                    <select
+                        id="alumno_id"
+                        name="alumno_id"
+                        required
+                        :class="selectClass"
+                    >
+                        <option
+                            v-for="a in alumnosDisponibles"
+                            :key="a.id"
+                            :value="a.id"
+                        >
+                            {{ a.apellido }}, {{ a.nombre }}
+                        </option>
+                    </select>
+                    <InputError :message="errors.alumno_id" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="fecha_matriculacion">Fecha</Label>
+                    <Input
+                        id="fecha_matriculacion"
+                        type="date"
+                        name="fecha_matriculacion"
+                        :default-value="today"
+                        required
+                    />
+                    <InputError :message="errors.fecha_matriculacion" />
+                </div>
+
+                <Button :disabled="matriculando">Matricular</Button>
+            </Form>
+            <p v-else class="text-sm text-muted-foreground">
+                No hay alumnos activos disponibles para matricular.
             </p>
         </div>
     </div>

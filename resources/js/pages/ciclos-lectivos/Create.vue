@@ -34,16 +34,16 @@ defineOptions({
 
         <Form
             v-bind="CicloLectivoController.store.form()"
-            class="max-w-2xl space-y-6"
+            class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
-                <Label for="anio">Año</Label>
-                <Input id="anio" type="number" name="anio" required />
-                <InputError :message="errors.anio" />
-            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="grid gap-2">
+                    <Label for="anio">Año</Label>
+                    <Input id="anio" type="number" name="anio" required />
+                    <InputError :message="errors.anio" />
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
                 <div class="grid gap-2">
                     <Label for="fecha_inicio">Fecha de inicio</Label>
                     <Input

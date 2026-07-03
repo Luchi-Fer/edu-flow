@@ -28,10 +28,10 @@ defineOptions({
 
         <Form
             v-bind="AlumnoController.store.form()"
-            class="max-w-2xl space-y-6"
+            class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-3 gap-4">
                 <div class="grid gap-2">
                     <Label for="nombre">Nombre</Label>
                     <Input id="nombre" name="nombre" required />
@@ -43,9 +43,7 @@ defineOptions({
                     <Input id="apellido" name="apellido" required />
                     <InputError :message="errors.apellido" />
                 </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-4">
                 <div class="grid gap-2">
                     <Label for="dni">DNI</Label>
                     <Input id="dni" name="dni" required />
@@ -66,9 +64,7 @@ defineOptions({
                     </select>
                     <InputError :message="errors.genero" />
                 </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-4">
                 <div class="grid gap-2">
                     <Label for="fecha_nacimiento">Fecha de nacimiento</Label>
                     <Input
@@ -90,21 +86,19 @@ defineOptions({
                     />
                     <InputError :message="errors.fecha_ingreso" />
                 </div>
-            </div>
 
-            <div class="grid gap-2">
-                <Label for="direccion">Dirección</Label>
-                <Input id="direccion" name="direccion" />
-                <InputError :message="errors.direccion" />
-            </div>
+                <div class="col-span-2 grid gap-2">
+                    <Label for="direccion">Dirección</Label>
+                    <Input id="direccion" name="direccion" />
+                    <InputError :message="errors.direccion" />
+                </div>
 
-            <div class="grid gap-2">
-                <Label for="telefono">Teléfono</Label>
-                <Input id="telefono" name="telefono" />
-                <InputError :message="errors.telefono" />
-            </div>
+                <div class="grid gap-2">
+                    <Label for="telefono">Teléfono</Label>
+                    <Input id="telefono" name="telefono" />
+                    <InputError :message="errors.telefono" />
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
                 <div class="grid gap-2">
                     <Label for="nombre_tutor">Nombre del tutor</Label>
                     <Input id="nombre_tutor" name="nombre_tutor" />
@@ -116,12 +110,12 @@ defineOptions({
                     <Input id="telefono_tutor" name="telefono_tutor" />
                     <InputError :message="errors.telefono_tutor" />
                 </div>
-            </div>
 
-            <div class="grid gap-2">
-                <Label for="email_tutor">Email del tutor</Label>
-                <Input id="email_tutor" type="email" name="email_tutor" />
-                <InputError :message="errors.email_tutor" />
+                <div class="grid gap-2">
+                    <Label for="email_tutor">Email del tutor</Label>
+                    <Input id="email_tutor" type="email" name="email_tutor" />
+                    <InputError :message="errors.email_tutor" />
+                </div>
             </div>
 
             <div class="flex items-center gap-4">

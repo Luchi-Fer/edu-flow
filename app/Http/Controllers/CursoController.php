@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
+use App\Models\Alumno;
 use App\Models\CicloLectivo;
 use App\Models\Curso;
 use App\Models\Materia;
@@ -65,7 +66,10 @@ class CursoController extends Controller
      */
     public function edit(Curso $curso): Response
     {
-        $curso->load(['materias' => fn ($query) => $query->orderBy('nombre')]);
+        $curso->load([
+            'materias' => fn ($query) => $query->orderBy('nombre'),
+            'alumnos' => fn ($query) => $query->orderBy('apellido'),
+        ]);
 
         return Inertia::render('cursos/Edit', [
             'curso' => $curso,
@@ -74,6 +78,10 @@ class CursoController extends Controller
                 ->orderBy('nombre')
                 ->get(['id', 'nombre']),
             'profesoresActivos' => Profesor::where('activo', true)
+                ->orderBy('apellido')
+                ->get(['id', 'nombre', 'apellido']),
+            'alumnosDisponibles' => Alumno::where('activo', true)
+                ->whereNotIn('id', $curso->alumnos()->pluck('alumno_id'))
                 ->orderBy('apellido')
                 ->get(['id', 'nombre', 'apellido']),
         ]);

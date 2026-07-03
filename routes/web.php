@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\CicloLectivoController;
+use App\Http\Controllers\CursoAlumnoController;
 use App\Http\Controllers\CursoController;
 use App\Http\Controllers\CursoMateriaController;
 use App\Http\Controllers\MateriaController;
@@ -42,6 +43,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('cursos.materias.update');
         Route::delete('cursos/{curso}/materias/{materia}', [CursoMateriaController::class, 'destroy'])
             ->name('cursos.materias.destroy');
+
+        Route::post('cursos/{curso}/alumnos', [CursoAlumnoController::class, 'store'])
+            ->name('cursos.alumnos.store');
+        Route::patch('cursos/{curso}/alumnos/{alumno}', [CursoAlumnoController::class, 'update'])
+            ->name('cursos.alumnos.update');
+        Route::delete('cursos/{curso}/alumnos/{alumno}', [CursoAlumnoController::class, 'destroy'])
+            ->name('cursos.alumnos.destroy');
     });
 });
 

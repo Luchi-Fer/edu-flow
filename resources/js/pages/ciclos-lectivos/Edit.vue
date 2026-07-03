@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useDateFormat } from '@/composables/useDateFormat';
 import type { CicloLectivo } from '@/types';
 
 defineProps<{
@@ -27,6 +28,8 @@ defineOptions({
         ],
     },
 });
+
+const { toDateInputValue } = useDateFormat();
 </script>
 
 <template>
@@ -40,29 +43,31 @@ defineOptions({
 
         <Form
             v-bind="CicloLectivoController.update.form(cicloLectivo.id)"
-            class="max-w-2xl space-y-6"
+            class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
-                <Label for="anio">Año</Label>
-                <Input
-                    id="anio"
-                    type="number"
-                    name="anio"
-                    :default-value="cicloLectivo.anio"
-                    required
-                />
-                <InputError :message="errors.anio" />
-            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="grid gap-2">
+                    <Label for="anio">Año</Label>
+                    <Input
+                        id="anio"
+                        type="number"
+                        name="anio"
+                        :default-value="cicloLectivo.anio"
+                        required
+                    />
+                    <InputError :message="errors.anio" />
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
                 <div class="grid gap-2">
                     <Label for="fecha_inicio">Fecha de inicio</Label>
                     <Input
                         id="fecha_inicio"
                         type="date"
                         name="fecha_inicio"
-                        :default-value="cicloLectivo.fecha_inicio"
+                        :default-value="
+                            toDateInputValue(cicloLectivo.fecha_inicio)
+                        "
                         required
                     />
                     <InputError :message="errors.fecha_inicio" />
@@ -74,7 +79,9 @@ defineOptions({
                         id="fecha_fin"
                         type="date"
                         name="fecha_fin"
-                        :default-value="cicloLectivo.fecha_fin"
+                        :default-value="
+                            toDateInputValue(cicloLectivo.fecha_fin)
+                        "
                         required
                     />
                     <InputError :message="errors.fecha_fin" />
@@ -87,7 +94,7 @@ defineOptions({
                     id="activo"
                     name="activo"
                     value="1"
-                    :default-checked="cicloLectivo.activo"
+                    :default-value="cicloLectivo.activo"
                 />
                 <Label for="activo">Ciclo lectivo activo</Label>
                 <InputError :message="errors.activo" />

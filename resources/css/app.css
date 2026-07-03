@@ -90,6 +90,7 @@
 }
 
 :root {
+    color-scheme: light;
     --background: hsl(0 0% 100%);
     --foreground: hsl(0 0% 3.9%);
     --card: hsl(0 0% 100%);
@@ -127,6 +128,7 @@
 }
 
 .dark {
+    color-scheme: dark;
     --background: hsl(0 0% 3.9%);
     --foreground: hsl(0 0% 98%);
     --card: hsl(0 0% 3.9%);
@@ -167,6 +169,17 @@
         @apply border-border outline-ring/50;
     }
     body {
+        @apply bg-background text-foreground;
+    }
+
+    /*
+     * Native <select> dropdown popups are rendered by the browser, not by
+     * our own CSS — `color-scheme` alone isn't consistently honored across
+     * browsers for the popup background, so set it explicitly here to
+     * avoid white-on-white/invisible text in dark mode.
+     */
+    select,
+    option {
         @apply bg-background text-foreground;
     }
 }

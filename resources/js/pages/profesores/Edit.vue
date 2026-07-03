@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useDateFormat } from '@/composables/useDateFormat';
 import type { Profesor } from '@/types';
 
 defineProps<{
@@ -21,6 +22,8 @@ defineOptions({
         ],
     },
 });
+
+const { toDateInputValue } = useDateFormat();
 </script>
 
 <template>
@@ -34,10 +37,10 @@ defineOptions({
 
         <Form
             v-bind="ProfesorController.update.form(profesor.id)"
-            class="max-w-2xl space-y-6"
+            class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-3 gap-4">
                 <div class="grid gap-2">
                     <Label for="nombre">Nombre</Label>
                     <Input
@@ -59,27 +62,37 @@ defineOptions({
                     />
                     <InputError :message="errors.apellido" />
                 </div>
-            </div>
 
-            <div class="grid gap-2">
-                <Label for="dni">DNI</Label>
-                <Input
-                    id="dni"
-                    name="dni"
-                    :default-value="profesor.dni"
-                    required
-                />
-                <InputError :message="errors.dni" />
-            </div>
+                <div class="grid gap-2">
+                    <Label for="dni">DNI</Label>
+                    <Input
+                        id="dni"
+                        name="dni"
+                        :default-value="profesor.dni"
+                        required
+                    />
+                    <InputError :message="errors.dni" />
+                </div>
 
-            <div class="grid grid-cols-2 gap-4">
+                <div class="grid gap-2">
+                    <Label for="telefono">Teléfono</Label>
+                    <Input
+                        id="telefono"
+                        name="telefono"
+                        :default-value="profesor.telefono ?? ''"
+                    />
+                    <InputError :message="errors.telefono" />
+                </div>
+
                 <div class="grid gap-2">
                     <Label for="fecha_nacimiento">Fecha de nacimiento</Label>
                     <Input
                         id="fecha_nacimiento"
                         type="date"
                         name="fecha_nacimiento"
-                        :default-value="profesor.fecha_nacimiento"
+                        :default-value="
+                            toDateInputValue(profesor.fecha_nacimiento)
+                        "
                         required
                     />
                     <InputError :message="errors.fecha_nacimiento" />
@@ -91,31 +104,23 @@ defineOptions({
                         id="fecha_ingreso"
                         type="date"
                         name="fecha_ingreso"
-                        :default-value="profesor.fecha_ingreso"
+                        :default-value="
+                            toDateInputValue(profesor.fecha_ingreso)
+                        "
                         required
                     />
                     <InputError :message="errors.fecha_ingreso" />
                 </div>
-            </div>
 
-            <div class="grid gap-2">
-                <Label for="direccion">Dirección</Label>
-                <Input
-                    id="direccion"
-                    name="direccion"
-                    :default-value="profesor.direccion ?? ''"
-                />
-                <InputError :message="errors.direccion" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="telefono">Teléfono</Label>
-                <Input
-                    id="telefono"
-                    name="telefono"
-                    :default-value="profesor.telefono ?? ''"
-                />
-                <InputError :message="errors.telefono" />
+                <div class="col-span-3 grid gap-2">
+                    <Label for="direccion">Dirección</Label>
+                    <Input
+                        id="direccion"
+                        name="direccion"
+                        :default-value="profesor.direccion ?? ''"
+                    />
+                    <InputError :message="errors.direccion" />
+                </div>
             </div>
 
             <div class="space-y-2 border-t pt-6">
@@ -133,7 +138,7 @@ defineOptions({
                     id="activo"
                     name="activo"
                     value="1"
-                    :default-checked="profesor.activo"
+                    :default-value="profesor.activo"
                 />
                 <Label for="activo">Profesor activo</Label>
                 <InputError :message="errors.activo" />

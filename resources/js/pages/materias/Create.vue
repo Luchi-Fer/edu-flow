@@ -28,10 +28,10 @@ defineOptions({
 
         <Form
             v-bind="MateriaController.store.form()"
-            class="max-w-2xl space-y-6"
+            class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
+            <div class="grid max-w-sm gap-2">
                 <Label for="nombre">Nombre</Label>
                 <Input id="nombre" name="nombre" required />
                 <InputError :message="errors.nombre" />

@@ -13,6 +13,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { useDateFormat } from '@/composables/useDateFormat';
 import type { CicloLectivo } from '@/types';
 
 type PaginationLink = {
@@ -38,6 +39,8 @@ defineOptions({
         ],
     },
 });
+
+const { formatDate } = useDateFormat();
 </script>
 
 <template>
@@ -76,8 +79,12 @@ defineOptions({
                         class="border-t"
                     >
                         <td class="px-4 py-2">{{ ciclo.anio }}</td>
-                        <td class="px-4 py-2">{{ ciclo.fecha_inicio }}</td>
-                        <td class="px-4 py-2">{{ ciclo.fecha_fin }}</td>
+                        <td class="px-4 py-2">
+                            {{ formatDate(ciclo.fecha_inicio) }}
+                        </td>
+                        <td class="px-4 py-2">
+                            {{ formatDate(ciclo.fecha_fin) }}
+                        </td>
                         <td class="px-4 py-2">
                             <Badge
                                 :variant="
