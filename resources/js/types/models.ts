@@ -42,3 +42,24 @@ export type Materia = {
     created_at: string;
     updated_at: string;
 };
+
+export type CicloLectivo = {
+    id: number;
+    anio: number;
+    fecha_inicio: string;
+    fecha_fin: string;
+    activo: boolean;
+    created_at: string;
+    updated_at: string;
+};
+
+export type Curso = {
+    id: number;
+    ciclo_lectivo_id: number;
+    anio: number;
+    division: string;
+    turno: string | null;
+    created_at: string;
+    updated_at: string;
+    ciclo_lectivo: Pick<CicloLectivo, 'id' | 'anio'>;
+};

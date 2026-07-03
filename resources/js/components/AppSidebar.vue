@@ -2,14 +2,18 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookOpen,
+    CalendarRange,
     FolderGit2,
     GraduationCap,
+    Layers,
     LayoutGrid,
     Library,
     Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AlumnoController from '@/actions/App/Http/Controllers/AlumnoController';
+import CicloLectivoController from '@/actions/App/Http/Controllers/CicloLectivoController';
+import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import MateriaController from '@/actions/App/Http/Controllers/MateriaController';
 import ProfesorController from '@/actions/App/Http/Controllers/ProfesorController';
 import AppLogo from '@/components/AppLogo.vue';
@@ -60,6 +64,20 @@ const mainNavItems = computed<NavItem[]>(() => [
                   title: 'Materias',
                   href: MateriaController.index(),
                   icon: Library,
+              },
+          ]
+        : []),
+    ...(page.props.can['gestionar-cursos']
+        ? [
+              {
+                  title: 'Cursos',
+                  href: CursoController.index(),
+                  icon: Layers,
+              },
+              {
+                  title: 'Ciclos Lectivos',
+                  href: CicloLectivoController.index(),
+                  icon: CalendarRange,
               },
           ]
         : []),
