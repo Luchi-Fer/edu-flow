@@ -34,3 +34,11 @@ export type Profesor = {
         email: string;
     };
 };
+
+export type Materia = {
+    id: number;
+    nombre: string;
+    descripcion: string | null;
+    created_at: string;
+    updated_at: string;
+};

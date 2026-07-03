@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AlumnoController;
+use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\ProfesorController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->except('show')
         ->parameters(['profesores' => 'profesor'])
         ->middleware('can:gestionar-profesores');
+
+    Route::resource('materias', MateriaController::class)
+        ->except('show')
+        ->middleware('can:gestionar-materias');
 });
 
 require __DIR__.'/settings.php';

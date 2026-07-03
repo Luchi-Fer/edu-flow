@@ -5,10 +5,12 @@ import {
     FolderGit2,
     GraduationCap,
     LayoutGrid,
+    Library,
     Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AlumnoController from '@/actions/App/Http/Controllers/AlumnoController';
+import MateriaController from '@/actions/App/Http/Controllers/MateriaController';
 import ProfesorController from '@/actions/App/Http/Controllers/ProfesorController';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -49,6 +51,15 @@ const mainNavItems = computed<NavItem[]>(() => [
                   title: 'Profesores',
                   href: ProfesorController.index(),
                   icon: Users,
+              },
+          ]
+        : []),
+    ...(page.props.can['gestionar-materias']
+        ? [
+              {
+                  title: 'Materias',
+                  href: MateriaController.index(),
+                  icon: Library,
               },
           ]
         : []),

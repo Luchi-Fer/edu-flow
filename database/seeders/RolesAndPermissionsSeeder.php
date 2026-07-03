@@ -17,6 +17,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'gestionar-usuarios',
             'gestionar-alumnos',
             'gestionar-profesores',
+            'gestionar-materias',
             'gestionar-cursos',
             'ver-cursos',
             'tomar-asistencia',
@@ -33,6 +34,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'gestionar-usuarios',
             'gestionar-alumnos',
             'gestionar-profesores',
+            'gestionar-materias',
             'gestionar-cursos',
             'ver-cursos',
         ]);
