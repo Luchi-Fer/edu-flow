@@ -3,6 +3,7 @@
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\CicloLectivoController;
 use App\Http\Controllers\CursoController;
+use App\Http\Controllers\CursoMateriaController;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\ProfesorController;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('cursos', CursoController::class)
         ->except('show')
         ->middleware('can:gestionar-cursos');
+
+    Route::middleware('can:gestionar-cursos')->group(function () {
+        Route::post('cursos/{curso}/materias', [CursoMateriaController::class, 'store'])
+            ->name('cursos.materias.store');
+        Route::patch('cursos/{curso}/materias/{materia}', [CursoMateriaController::class, 'update'])
+            ->name('cursos.materias.update');
+        Route::delete('cursos/{curso}/materias/{materia}', [CursoMateriaController::class, 'destroy'])
+            ->name('cursos.materias.destroy');
+    });
 });
 
 require __DIR__.'/settings.php';

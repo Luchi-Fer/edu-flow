@@ -6,6 +6,8 @@ use App\Http\Requests\StoreCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
 use App\Models\CicloLectivo;
 use App\Models\Curso;
+use App\Models\Materia;
+use App\Models\Profesor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -63,9 +65,17 @@ class CursoController extends Controller
      */
     public function edit(Curso $curso): Response
     {
+        $curso->load(['materias' => fn ($query) => $query->orderBy('nombre')]);
+
         return Inertia::render('cursos/Edit', [
             'curso' => $curso,
             'ciclosLectivos' => CicloLectivo::orderByDesc('anio')->get(['id', 'anio']),
+            'materiasDisponibles' => Materia::whereNotIn('id', $curso->materias()->pluck('materia_id'))
+                ->orderBy('nombre')
+                ->get(['id', 'nombre']),
+            'profesoresActivos' => Profesor::where('activo', true)
+                ->orderBy('apellido')
+                ->get(['id', 'nombre', 'apellido']),
         ]);
     }
 
