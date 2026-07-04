@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import CursoAlumnoController from '@/actions/App/Http/Controllers/CursoAlumnoController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import CursoMateriaController from '@/actions/App/Http/Controllers/CursoMateriaController';
@@ -18,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDateFormat } from '@/composables/useDateFormat';
+import { ETIQUETAS_ANIO_POR_NIVEL } from '@/lib/nivelEducativo';
 import type { Alumno, CicloLectivo, Curso, Materia, Profesor } from '@/types';
 
 type MateriaAsignada = Pick<Materia, 'id' | 'nombre'> & {
@@ -81,23 +83,23 @@ function onEstadoChange(alumnoId: number, event: Event) {
 const today = new Date().toISOString().slice(0, 10);
 
 const { formatDate } = useDateFormat();
+
+const nivel = ref<'primaria' | 'secundaria'>(props.curso.nivel);
+const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
 </script>
 
 <template>
-    <Head :title="`Editar curso ${curso.anio}° ${curso.division}`" />
+    <Head :title="`Editar curso ${curso.label}`" />
 
     <div class="flex flex-col space-y-6 p-4">
-        <Heading
-            title="Editar curso"
-            :description="`${curso.anio}° ${curso.division}`"
-        />
+        <Heading title="Editar curso" :description="curso.label" />
 
         <Form
             v-bind="CursoController.update.form(curso.id)"
             class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid grid-cols-4 gap-4">
+            <div class="grid grid-cols-5 gap-4">
                 <div class="grid gap-2">
                     <Label for="ciclo_lectivo_id">Ciclo lectivo</Label>
                     <select
@@ -119,6 +121,21 @@ const { formatDate } = useDateFormat();
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="nivel">Nivel</Label>
+                    <select
+                        id="nivel"
+                        name="nivel"
+                        v-model="nivel"
+                        required
+                        :class="selectClass"
+                    >
+                        <option value="primaria">Primaria</option>
+                        <option value="secundaria">Secundaria</option>
+                    </select>
+                    <InputError :message="errors.nivel" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="anio">Año</Label>
                     <select
                         id="anio"
@@ -127,8 +144,12 @@ const { formatDate } = useDateFormat();
                         :value="curso.anio"
                         :class="selectClass"
                     >
-                        <option v-for="n in 7" :key="n" :value="n">
-                            {{ n }}°
+                        <option
+                            v-for="(etiqueta, indice) in etiquetasAnio"
+                            :key="etiqueta"
+                            :value="indice + 1"
+                        >
+                            {{ etiqueta }}
                         </option>
                     </select>
                     <InputError :message="errors.anio" />

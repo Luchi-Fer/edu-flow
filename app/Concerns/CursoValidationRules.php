@@ -16,13 +16,15 @@ trait CursoValidationRules
     {
         return [
             'ciclo_lectivo_id' => ['required', 'integer', 'exists:ciclos_lectivos,id'],
+            'nivel' => ['required', Rule::in(['primaria', 'secundaria'])],
             'anio' => [
                 'required',
                 'integer',
-                'between:1,7',
+                'between:1,6',
                 Rule::unique('cursos')
                     ->where(fn ($query) => $query
                         ->where('ciclo_lectivo_id', $this->input('ciclo_lectivo_id'))
+                        ->where('nivel', $this->input('nivel'))
                         ->where('division', $this->input('division')))
                     ->ignore($cursoId),
             ],

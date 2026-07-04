@@ -116,6 +116,16 @@ function onSearch() {
                                 <Button as-child variant="outline" size="sm">
                                     <Link
                                         :href="
+                                            ProfesorController.show(profesor.id)
+                                        "
+                                    >
+                                        Ver
+                                    </Link>
+                                </Button>
+
+                                <Button as-child variant="outline" size="sm">
+                                    <Link
+                                        :href="
                                             ProfesorController.edit(profesor.id)
                                         "
                                     >

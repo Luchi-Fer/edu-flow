@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ETIQUETAS_ANIO_POR_NIVEL } from '@/lib/nivelEducativo';
 import type { CicloLectivo } from '@/types';
 
 defineProps<{
@@ -23,6 +25,9 @@ defineOptions({
 
 const selectClass =
     'h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
+
+const nivel = ref<'primaria' | 'secundaria'>('primaria');
+const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
 </script>
 
 <template>
@@ -36,7 +41,7 @@ const selectClass =
             class="max-w-5xl space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid grid-cols-4 gap-4">
+            <div class="grid grid-cols-5 gap-4">
                 <div class="grid gap-2">
                     <Label for="ciclo_lectivo_id">Ciclo lectivo</Label>
                     <select
@@ -60,13 +65,32 @@ const selectClass =
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="nivel">Nivel</Label>
+                    <select
+                        id="nivel"
+                        name="nivel"
+                        v-model="nivel"
+                        required
+                        :class="selectClass"
+                    >
+                        <option value="primaria">Primaria</option>
+                        <option value="secundaria">Secundaria</option>
+                    </select>
+                    <InputError :message="errors.nivel" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="anio">Año</Label>
                     <select id="anio" name="anio" required :class="selectClass">
                         <option value="" disabled selected>
                             Seleccionar...
                         </option>
-                        <option v-for="n in 7" :key="n" :value="n">
-                            {{ n }}°
+                        <option
+                            v-for="(etiqueta, indice) in etiquetasAnio"
+                            :key="etiqueta"
+                            :value="indice + 1"
+                        >
+                            {{ etiqueta }}
                         </option>
                     </select>
                     <InputError :message="errors.anio" />

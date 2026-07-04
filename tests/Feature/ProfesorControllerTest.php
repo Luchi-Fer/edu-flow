@@ -2,10 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\CicloLectivo;
+use App\Models\Curso;
+use App\Models\Materia;
 use App\Models\Profesor;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ProfesorControllerTest extends TestCase
@@ -40,6 +44,32 @@ class ProfesorControllerTest extends TestCase
         Profesor::factory()->count(3)->create();
 
         $this->get(route('profesores.index'))->assertOk();
+    }
+
+    public function test_administrador_can_view_a_profesors_assignments()
+    {
+        $this->actingAsAdministrador();
+        $profesor = Profesor::factory()->create();
+        $ciclo = CicloLectivo::factory()->create(['anio' => 2026]);
+        $cursoA = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'secundaria', 'anio' => 4, 'division' => 'A']);
+        $cursoB = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'primaria', 'anio' => 5, 'division' => 'A']);
+        $matematica = Materia::factory()->create(['nombre' => 'Matemática']);
+        $quimica = Materia::factory()->create(['nombre' => 'Química']);
+
+        $cursoA->materias()->attach($matematica->id, ['profesor_id' => $profesor->id]);
+        $cursoB->materias()->attach($quimica->id, ['profesor_id' => $profesor->id]);
+
+        $response = $this->get(route('profesores.show', $profesor));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('profesores/Show')
+            ->has('asignaciones', 2)
+            ->where('asignaciones.0.materia', 'Química')
+            ->where('asignaciones.0.curso', '5to grado A')
+            ->where('asignaciones.1.materia', 'Matemática')
+            ->where('asignaciones.1.curso', '1er año A')
+        );
     }
 
     public function test_administrador_can_create_a_profesor_with_its_user_account()

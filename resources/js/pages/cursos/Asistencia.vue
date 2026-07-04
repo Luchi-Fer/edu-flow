@@ -42,13 +42,10 @@ function onFechaChange(event: Event) {
 </script>
 
 <template>
-    <Head :title="`Asistencia — ${curso.anio}° ${curso.division}`" />
+    <Head :title="`Asistencia — ${curso.label}`" />
 
     <div class="flex flex-col space-y-6 p-4">
-        <Heading
-            title="Tomar asistencia"
-            :description="`${curso.anio}° ${curso.division}`"
-        />
+        <Heading title="Tomar asistencia" :description="curso.label" />
 
         <div class="grid max-w-xs gap-2">
             <label for="fecha" class="text-sm font-medium">Fecha</label>

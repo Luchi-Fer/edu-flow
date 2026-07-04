@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::create('cursos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ciclo_lectivo_id')->constrained('ciclos_lectivos')->restrictOnDelete();
+            $table->string('nivel');
             $table->unsignedTinyInteger('anio');
             $table->string('division', 5);
             $table->string('turno')->nullable();
             $table->timestamps();
 
-            $table->unique(['ciclo_lectivo_id', 'anio', 'division']);
+            $table->unique(['ciclo_lectivo_id', 'nivel', 'anio', 'division']);
         });
     }
 

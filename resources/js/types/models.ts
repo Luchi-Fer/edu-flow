@@ -65,9 +65,11 @@ export type CicloLectivo = {
 export type Curso = {
     id: number;
     ciclo_lectivo_id: number;
+    nivel: 'primaria' | 'secundaria';
     anio: number;
     division: string;
     turno: string | null;
+    label: string;
     created_at: string;
     updated_at: string;
     ciclo_lectivo: Pick<CicloLectivo, 'id' | 'anio'>;

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProfesorRequest;
 use App\Http\Requests\UpdateProfesorRequest;
+use App\Models\CursoMateria;
 use App\Models\Profesor;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -74,6 +75,33 @@ class ProfesorController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profesor creado.')]);
 
         return to_route('profesores.index');
+    }
+
+    /**
+     * Display the profesor's curso/materia assignments.
+     */
+    public function show(Profesor $profesor): Response
+    {
+        $asignaciones = CursoMateria::where('profesor_id', $profesor->id)
+            ->with(['curso.cicloLectivo', 'materia'])
+            ->get()
+            ->sortBy(fn (CursoMateria $asignacion) => [
+                $asignacion->curso->cicloLectivo->anio,
+                $asignacion->curso->nivel->value,
+                $asignacion->curso->anio,
+                $asignacion->curso->division,
+            ])
+            ->values();
+
+        return Inertia::render('profesores/Show', [
+            'profesor' => $profesor->load('user'),
+            'asignaciones' => $asignaciones->map(fn (CursoMateria $asignacion) => [
+                'id' => $asignacion->id,
+                'ciclo_lectivo' => $asignacion->curso->cicloLectivo->anio,
+                'curso' => $asignacion->curso->label,
+                'materia' => $asignacion->materia->nombre,
+            ]),
+        ]);
     }
 
     /**

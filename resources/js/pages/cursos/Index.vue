@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import AsistenciaController from '@/actions/App/Http/Controllers/AsistenciaController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import Heading from '@/components/Heading.vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -90,6 +91,7 @@ function onFilterChange(event: Event) {
                 <thead class="bg-muted/50 text-left">
                     <tr>
                         <th class="px-4 py-2 font-medium">Ciclo lectivo</th>
+                        <th class="px-4 py-2 font-medium">Nivel</th>
                         <th class="px-4 py-2 font-medium">Curso</th>
                         <th class="px-4 py-2 font-medium">Turno</th>
                         <th class="px-4 py-2 font-medium">
@@ -107,7 +109,16 @@ function onFilterChange(event: Event) {
                             {{ curso.ciclo_lectivo.anio }}
                         </td>
                         <td class="px-4 py-2">
-                            {{ curso.anio }}° {{ curso.division }}
+                            <Badge variant="secondary">
+                                {{
+                                    curso.nivel === 'primaria'
+                                        ? 'Primaria'
+                                        : 'Secundaria'
+                                }}
+                            </Badge>
+                        </td>
+                        <td class="px-4 py-2">
+                            {{ curso.label }}
                         </td>
                         <td class="px-4 py-2">{{ curso.turno ?? '—' }}</td>
                         <td class="px-4 py-2 text-right">
@@ -159,8 +170,7 @@ function onFilterChange(event: Event) {
                                             <DialogHeader class="space-y-3">
                                                 <DialogTitle>
                                                     ¿Eliminar el curso
-                                                    {{ curso.anio }}°
-                                                    {{ curso.division }} ({{
+                                                    {{ curso.label }} ({{
                                                         curso.ciclo_lectivo
                                                             .anio
                                                     }})?
@@ -190,7 +200,7 @@ function onFilterChange(event: Event) {
                     </tr>
                     <tr v-if="cursos.data.length === 0">
                         <td
-                            colspan="4"
+                            colspan="5"
                             class="px-4 py-6 text-center text-muted-foreground"
                         >
                             No hay cursos que coincidan con el filtro.

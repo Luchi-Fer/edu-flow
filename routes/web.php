@@ -25,7 +25,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:gestionar-alumnos');
 
     Route::resource('profesores', ProfesorController::class)
-        ->except('show')
         ->parameters(['profesores' => 'profesor'])
         ->middleware('can:gestionar-profesores');
 

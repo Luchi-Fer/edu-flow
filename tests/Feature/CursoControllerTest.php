@@ -61,6 +61,7 @@ class CursoControllerTest extends TestCase
 
         $response = $this->post(route('cursos.store'), [
             'ciclo_lectivo_id' => $ciclo->id,
+            'nivel' => 'primaria',
             'anio' => 1,
             'division' => 'A',
             'turno' => 'mañana',
@@ -69,6 +70,7 @@ class CursoControllerTest extends TestCase
         $response->assertRedirect(route('cursos.index'));
         $this->assertDatabaseHas('cursos', [
             'ciclo_lectivo_id' => $ciclo->id,
+            'nivel' => 'primaria',
             'anio' => 1,
             'division' => 'A',
         ]);
@@ -80,12 +82,14 @@ class CursoControllerTest extends TestCase
         $ciclo = CicloLectivo::factory()->create();
         Curso::factory()->create([
             'ciclo_lectivo_id' => $ciclo->id,
+            'nivel' => 'primaria',
             'anio' => 1,
             'division' => 'A',
         ]);
 
         $response = $this->post(route('cursos.store'), [
             'ciclo_lectivo_id' => $ciclo->id,
+            'nivel' => 'primaria',
             'anio' => 1,
             'division' => 'A',
         ]);
@@ -100,18 +104,57 @@ class CursoControllerTest extends TestCase
         $cicloB = CicloLectivo::factory()->create(['anio' => 2026]);
         Curso::factory()->create([
             'ciclo_lectivo_id' => $cicloA->id,
+            'nivel' => 'primaria',
             'anio' => 1,
             'division' => 'A',
         ]);
 
         $response = $this->post(route('cursos.store'), [
             'ciclo_lectivo_id' => $cicloB->id,
+            'nivel' => 'primaria',
             'anio' => 1,
             'division' => 'A',
         ]);
 
         $response->assertRedirect(route('cursos.index'));
         $this->assertDatabaseHas('cursos', ['ciclo_lectivo_id' => $cicloB->id, 'division' => 'A']);
+    }
+
+    public function test_the_same_anio_and_division_are_allowed_in_a_different_nivel()
+    {
+        $this->actingAsAdministrador();
+        $ciclo = CicloLectivo::factory()->create();
+        Curso::factory()->create([
+            'ciclo_lectivo_id' => $ciclo->id,
+            'nivel' => 'primaria',
+            'anio' => 1,
+            'division' => 'A',
+        ]);
+
+        $response = $this->post(route('cursos.store'), [
+            'ciclo_lectivo_id' => $ciclo->id,
+            'nivel' => 'secundaria',
+            'anio' => 1,
+            'division' => 'A',
+        ]);
+
+        $response->assertRedirect(route('cursos.index'));
+        $this->assertDatabaseHas('cursos', [
+            'ciclo_lectivo_id' => $ciclo->id,
+            'nivel' => 'secundaria',
+            'anio' => 1,
+            'division' => 'A',
+        ]);
+    }
+
+    public function test_curso_label_reflects_the_nivel_specific_grado_or_anio_wording()
+    {
+        $ciclo = CicloLectivo::factory()->create();
+        $primaria = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'primaria', 'anio' => 1, 'division' => 'A']);
+        $secundaria = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'secundaria', 'anio' => 4, 'division' => 'B']);
+
+        $this->assertSame('1er grado A', $primaria->label);
+        $this->assertSame('1er año B', $secundaria->label);
     }
 
     public function test_administrador_can_update_a_curso()
@@ -121,6 +164,7 @@ class CursoControllerTest extends TestCase
 
         $response = $this->put(route('cursos.update', $curso), [
             'ciclo_lectivo_id' => $curso->ciclo_lectivo_id,
+            'nivel' => $curso->nivel->value,
             'anio' => $curso->anio,
             'division' => 'Z',
             'turno' => 'tarde',
