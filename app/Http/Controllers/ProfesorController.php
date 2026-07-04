@@ -63,6 +63,8 @@ class ProfesorController extends Controller
                 'password' => $data['password'],
             ]);
 
+            $user->assignRole('Profesor');
+
             Profesor::create([
                 ...collect($data)->except(['email', 'password'])->all(),
                 'user_id' => $user->id,

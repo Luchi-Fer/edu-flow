@@ -35,6 +35,15 @@ export type Profesor = {
     };
 };
 
+export type Usuario = {
+    id: number;
+    name: string;
+    email: string;
+    roles: { id: number; name: string }[];
+    created_at: string;
+    updated_at: string;
+};
+
 export type Materia = {
     id: number;
     nombre: string;

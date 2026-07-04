@@ -6,6 +6,7 @@ import {
     Layers,
     LayoutGrid,
     Library,
+    UserCog,
     Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
@@ -14,6 +15,7 @@ import CicloLectivoController from '@/actions/App/Http/Controllers/CicloLectivoC
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import MateriaController from '@/actions/App/Http/Controllers/MateriaController';
 import ProfesorController from '@/actions/App/Http/Controllers/ProfesorController';
+import UsuarioController from '@/actions/App/Http/Controllers/UsuarioController';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -79,6 +81,15 @@ const mainNavItems = computed<NavItem[]>(() => [
                   title: 'Ciclos Lectivos',
                   href: CicloLectivoController.index(),
                   icon: CalendarRange,
+              },
+          ]
+        : []),
+    ...(page.props.can['gestionar-usuarios']
+        ? [
+              {
+                  title: 'Usuarios',
+                  href: UsuarioController.index(),
+                  icon: UserCog,
               },
           ]
         : []),

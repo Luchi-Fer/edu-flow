@@ -8,12 +8,17 @@ use App\Http\Controllers\CursoController;
 use App\Http\Controllers\CursoMateriaController;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\ProfesorController;
+use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+
+    Route::resource('usuarios', UsuarioController::class)
+        ->except('show')
+        ->middleware('can:gestionar-usuarios');
 
     Route::resource('alumnos', AlumnoController::class)
         ->except('show')

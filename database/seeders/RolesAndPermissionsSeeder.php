@@ -28,10 +28,10 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         Role::findOrCreate('Root');
+        Role::findOrCreate('Profesor');
 
         $administrador = Role::findOrCreate('Administrador');
         $administrador->syncPermissions([
-            'gestionar-usuarios',
             'gestionar-alumnos',
             'gestionar-profesores',
             'gestionar-materias',
