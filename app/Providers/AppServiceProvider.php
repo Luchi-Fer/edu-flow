@@ -28,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         Gate::before(fn (User $user, string $ability) => $user->hasRole('Root') ? true : null);
+
+        Gate::define('acceder-cursos', fn (User $user) => $user->can('ver-cursos')
+            || $user->can('gestionar-cursos')
+            || $user->can('tomar-asistencia'));
     }
 
     /**

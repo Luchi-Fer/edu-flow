@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                 'gestionar-profesores' => $request->user()?->can('gestionar-profesores') ?? false,
                 'gestionar-materias' => $request->user()?->can('gestionar-materias') ?? false,
                 'gestionar-cursos' => $request->user()?->can('gestionar-cursos') ?? false,
+                'tomar-asistencia' => $request->user()?->can('tomar-asistencia') ?? false,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

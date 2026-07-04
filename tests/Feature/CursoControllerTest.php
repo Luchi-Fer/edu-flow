@@ -29,10 +29,21 @@ class CursoControllerTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
 
         $user = User::factory()->create();
-        $user->assignRole('Preceptor');
         $this->actingAs($user);
 
         $this->get(route('cursos.index'))->assertForbidden();
+    }
+
+    public function test_preceptor_can_view_cursos_but_not_create_them()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('Preceptor');
+        $this->actingAs($user);
+
+        $this->get(route('cursos.index'))->assertOk();
+        $this->get(route('cursos.create'))->assertForbidden();
     }
 
     public function test_administrador_can_list_cursos()

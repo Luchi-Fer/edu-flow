@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import {
-    BookOpen,
     CalendarRange,
-    FolderGit2,
     GraduationCap,
     Layers,
     LayoutGrid,
@@ -17,7 +15,6 @@ import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import MateriaController from '@/actions/App/Http/Controllers/MateriaController';
 import ProfesorController from '@/actions/App/Http/Controllers/ProfesorController';
 import AppLogo from '@/components/AppLogo.vue';
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
@@ -67,13 +64,17 @@ const mainNavItems = computed<NavItem[]>(() => [
               },
           ]
         : []),
-    ...(page.props.can['gestionar-cursos']
+    ...(page.props.can['gestionar-cursos'] || page.props.can['tomar-asistencia']
         ? [
               {
                   title: 'Cursos',
                   href: CursoController.index(),
                   icon: Layers,
               },
+          ]
+        : []),
+    ...(page.props.can['gestionar-cursos']
+        ? [
               {
                   title: 'Ciclos Lectivos',
                   href: CicloLectivoController.index(),
@@ -82,19 +83,6 @@ const mainNavItems = computed<NavItem[]>(() => [
           ]
         : []),
 ]);
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
 </script>
 
 <template>
@@ -116,7 +104,6 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>

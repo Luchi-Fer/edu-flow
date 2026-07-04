@@ -20,7 +20,7 @@ class RolesAndPermissionsTest extends TestCase
 
         $this->assertTrue($user->fresh()->hasRole('Administrador'));
         $this->assertTrue($user->can('gestionar-alumnos'));
-        $this->assertFalse($user->can('tomar-asistencia'));
+        $this->assertTrue($user->can('tomar-asistencia'));
     }
 
     public function test_root_bypasses_permission_checks()

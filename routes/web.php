@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AlumnoController;
+use App\Http\Controllers\AsistenciaController;
 use App\Http\Controllers\CicloLectivoController;
 use App\Http\Controllers\CursoAlumnoController;
 use App\Http\Controllers\CursoController;
@@ -33,7 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:gestionar-cursos');
 
     Route::resource('cursos', CursoController::class)
-        ->except('show')
+        ->except(['show', 'index'])
         ->middleware('can:gestionar-cursos');
 
     Route::middleware('can:gestionar-cursos')->group(function () {
@@ -50,6 +51,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('cursos.alumnos.update');
         Route::delete('cursos/{curso}/alumnos/{alumno}', [CursoAlumnoController::class, 'destroy'])
             ->name('cursos.alumnos.destroy');
+    });
+
+    Route::middleware('can:acceder-cursos')->group(function () {
+        Route::get('cursos', [CursoController::class, 'index'])->name('cursos.index');
+        Route::get('cursos/{curso}/asistencia', [AsistenciaController::class, 'show'])
+            ->name('cursos.asistencia.show');
+        Route::post('cursos/{curso}/asistencia', [AsistenciaController::class, 'store'])
+            ->name('cursos.asistencia.store');
     });
 });
 

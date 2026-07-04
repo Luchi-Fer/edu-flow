@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { Form, Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import AsistenciaController from '@/actions/App/Http/Controllers/AsistenciaController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -35,6 +37,14 @@ defineOptions({
     },
 });
 
+const page = usePage();
+const canGestionarCursos = computed(
+    () => page.props.can['gestionar-cursos'] as boolean,
+);
+const canTomarAsistencia = computed(
+    () => page.props.can['tomar-asistencia'] as boolean,
+);
+
 function onFilterChange(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
 
@@ -55,7 +65,7 @@ function onFilterChange(event: Event) {
                 title="Cursos"
                 description="Cursos del colegio por ciclo lectivo"
             />
-            <Button as-child>
+            <Button v-if="canGestionarCursos" as-child>
                 <Link :href="CursoController.create()">Nuevo curso</Link>
             </Button>
         </div>
@@ -102,7 +112,27 @@ function onFilterChange(event: Event) {
                         <td class="px-4 py-2">{{ curso.turno ?? '—' }}</td>
                         <td class="px-4 py-2 text-right">
                             <div class="flex justify-end gap-2">
-                                <Button as-child variant="outline" size="sm">
+                                <Button
+                                    v-if="canTomarAsistencia"
+                                    as-child
+                                    variant="outline"
+                                    size="sm"
+                                >
+                                    <Link
+                                        :href="
+                                            AsistenciaController.show(curso.id)
+                                        "
+                                    >
+                                        Tomar asistencia
+                                    </Link>
+                                </Button>
+
+                                <Button
+                                    v-if="canGestionarCursos"
+                                    as-child
+                                    variant="outline"
+                                    size="sm"
+                                >
                                     <Link
                                         :href="CursoController.edit(curso.id)"
                                     >
@@ -110,7 +140,7 @@ function onFilterChange(event: Event) {
                                     </Link>
                                 </Button>
 
-                                <Dialog>
+                                <Dialog v-if="canGestionarCursos">
                                     <DialogTrigger as-child>
                                         <Button variant="destructive" size="sm">
                                             Eliminar

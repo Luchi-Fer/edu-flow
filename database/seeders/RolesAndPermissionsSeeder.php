@@ -37,6 +37,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'gestionar-materias',
             'gestionar-cursos',
             'ver-cursos',
+            'tomar-asistencia',
         ]);
 
         $preceptor = Role::findOrCreate('Preceptor');
