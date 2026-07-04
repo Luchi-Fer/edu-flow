@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { Check, X } from '@lucide/vue';
+import { ref, watch } from 'vue';
 import AsistenciaController from '@/actions/App/Http/Controllers/AsistenciaController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import type { Alumno, Curso } from '@/types';
 
+type Estado = 'presente' | 'ausente';
+
 type AlumnoAsistencia = {
     matricula_id: number;
     alumno: Pick<Alumno, 'id' | 'nombre' | 'apellido'>;
-    estado: 'presente' | 'ausente';
+    estado: Estado;
 };
 
 const props = defineProps<{
@@ -27,8 +31,21 @@ defineOptions({
     },
 });
 
-const selectClass =
-    'h-9 w-full max-w-[10rem] rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
+const estados = ref<Record<number, Estado>>({});
+
+watch(
+    () => props.alumnos,
+    (alumnos) => {
+        estados.value = Object.fromEntries(
+            alumnos.map((alumno) => [alumno.matricula_id, alumno.estado]),
+        );
+    },
+    { immediate: true },
+);
+
+function marcar(matriculaId: number, estado: Estado) {
+    estados.value[matriculaId] = estado;
+}
 
 function onFechaChange(event: Event) {
     const value = (event.target as HTMLInputElement).value;
@@ -60,7 +77,7 @@ function onFechaChange(event: Event) {
 
         <Form
             v-bind="AsistenciaController.store.form(curso.id)"
-            class="max-w-2xl space-y-4"
+            class="max-w-xl space-y-4"
             v-slot="{ processing }"
         >
             <input type="hidden" name="fecha" :value="fecha" />
@@ -70,7 +87,12 @@ function onFechaChange(event: Event) {
                     <thead class="bg-muted/50 text-left">
                         <tr>
                             <th class="px-4 py-2 font-medium">Alumno</th>
-                            <th class="px-4 py-2 font-medium">Estado</th>
+                            <th class="w-20 px-2 py-2 text-center font-medium">
+                                Presente
+                            </th>
+                            <th class="w-20 px-2 py-2 text-center font-medium">
+                                Ausente
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -83,20 +105,59 @@ function onFechaChange(event: Event) {
                                 {{ alumno.alumno.apellido }},
                                 {{ alumno.alumno.nombre }}
                             </td>
-                            <td class="px-4 py-2">
-                                <select
+                            <td class="px-2 py-2 text-center">
+                                <input
+                                    type="hidden"
                                     :name="`estados[${alumno.matricula_id}]`"
-                                    :value="alumno.estado"
-                                    :class="selectClass"
+                                    :value="estados[alumno.matricula_id]"
+                                />
+                                <button
+                                    type="button"
+                                    class="mx-auto flex size-9 items-center justify-center rounded-md border-2 transition-colors"
+                                    :class="
+                                        estados[alumno.matricula_id] ===
+                                        'presente'
+                                            ? 'border-green-600 bg-green-600 text-white dark:border-green-500 dark:bg-green-500'
+                                            : 'border-input text-transparent hover:border-green-600/50'
+                                    "
+                                    :aria-pressed="
+                                        estados[alumno.matricula_id] ===
+                                        'presente'
+                                    "
+                                    :aria-label="`Marcar presente a ${alumno.alumno.nombre} ${alumno.alumno.apellido}`"
+                                    @click="
+                                        marcar(alumno.matricula_id, 'presente')
+                                    "
                                 >
-                                    <option value="presente">Presente</option>
-                                    <option value="ausente">Ausente</option>
-                                </select>
+                                    <Check class="size-5" />
+                                </button>
+                            </td>
+                            <td class="px-2 py-2 text-center">
+                                <button
+                                    type="button"
+                                    class="mx-auto flex size-9 items-center justify-center rounded-md border-2 transition-colors"
+                                    :class="
+                                        estados[alumno.matricula_id] ===
+                                        'ausente'
+                                            ? 'border-red-600 bg-red-600 text-white dark:border-red-500 dark:bg-red-500'
+                                            : 'border-input text-transparent hover:border-red-600/50'
+                                    "
+                                    :aria-pressed="
+                                        estados[alumno.matricula_id] ===
+                                        'ausente'
+                                    "
+                                    :aria-label="`Marcar ausente a ${alumno.alumno.nombre} ${alumno.alumno.apellido}`"
+                                    @click="
+                                        marcar(alumno.matricula_id, 'ausente')
+                                    "
+                                >
+                                    <X class="size-5" />
+                                </button>
                             </td>
                         </tr>
                         <tr v-if="alumnos.length === 0">
                             <td
-                                colspan="2"
+                                colspan="3"
                                 class="px-4 py-6 text-center text-muted-foreground"
                             >
                                 No hay alumnos matriculados en este curso.
