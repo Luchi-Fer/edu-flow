@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
-use App\Models\Alumno;
 use App\Models\CicloLectivo;
 use App\Models\Curso;
 use App\Models\Materia;
@@ -71,18 +70,15 @@ class CursoController extends Controller
             'alumnos' => fn ($query) => $query->orderBy('apellido'),
         ]);
 
+        $profesorIdsAsignados = $curso->materias->pluck('pivot.profesor_id')->filter()->unique();
+
         return Inertia::render('cursos/Edit', [
             'curso' => $curso,
             'ciclosLectivos' => CicloLectivo::orderByDesc('anio')->get(['id', 'anio']),
             'materiasDisponibles' => Materia::whereNotIn('id', $curso->materias()->pluck('materia_id'))
                 ->orderBy('nombre')
                 ->get(['id', 'nombre']),
-            'profesoresActivos' => Profesor::where('activo', true)
-                ->orderBy('apellido')
-                ->get(['id', 'nombre', 'apellido']),
-            'alumnosDisponibles' => Alumno::where('activo', true)
-                ->whereNotIn('id', $curso->alumnos()->pluck('alumno_id'))
-                ->orderBy('apellido')
+            'profesoresAsignados' => Profesor::whereIn('id', $profesorIdsAsignados)
                 ->get(['id', 'nombre', 'apellido']),
         ]);
     }

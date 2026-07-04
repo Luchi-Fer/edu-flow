@@ -4,9 +4,11 @@ import { computed, ref } from 'vue';
 import CursoAlumnoController from '@/actions/App/Http/Controllers/CursoAlumnoController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import CursoMateriaController from '@/actions/App/Http/Controllers/CursoMateriaController';
+import ProfesorController from '@/actions/App/Http/Controllers/ProfesorController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
+import { SearchCombobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogClose,
@@ -44,8 +46,7 @@ const props = defineProps<{
     };
     ciclosLectivos: CicloLectivo[];
     materiasDisponibles: Pick<Materia, 'id' | 'nombre'>[];
-    profesoresActivos: ProfesorOption[];
-    alumnosDisponibles: AlumnoOption[];
+    profesoresAsignados: ProfesorOption[];
 }>();
 
 defineOptions({
@@ -60,12 +61,16 @@ defineOptions({
 const selectClass =
     'h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
 
-function onProfesorChange(materiaId: number, event: Event) {
-    const value = (event.target as HTMLSelectElement).value;
+function labelProfesorAsignado(profesorId: number | null): string | null {
+    const profesor = props.profesoresAsignados.find((p) => p.id === profesorId);
 
+    return profesor ? `${profesor.apellido}, ${profesor.nombre}` : null;
+}
+
+function onProfesorChange(materiaId: number, profesorId: number | null) {
     router.patch(
         CursoMateriaController.update.url([props.curso.id, materiaId]),
-        { profesor_id: value || null },
+        { profesor_id: profesorId },
         { preserveScroll: true },
     );
 }
@@ -86,6 +91,10 @@ const { formatDate } = useDateFormat();
 
 const nivel = ref<'primaria' | 'secundaria'>(props.curso.nivel);
 const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
+
+const profesorParaAgregar = ref<number | null>(null);
+const alumnoParaMatricular = ref<number | null>(null);
+const profesorBuscarUrl = ProfesorController.buscar().url;
 </script>
 
 <template>
@@ -219,24 +228,23 @@ const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
                             class="border-t"
                         >
                             <td class="px-4 py-2">{{ materia.nombre }}</td>
-                            <td class="px-4 py-2">
-                                <select
-                                    :value="materia.pivot.profesor_id ?? ''"
-                                    class="h-8 w-full max-w-xs rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                    @change="
-                                        onProfesorChange(materia.id, $event)
+                            <td class="max-w-xs px-4 py-2">
+                                <SearchCombobox
+                                    :model-value="materia.pivot.profesor_id"
+                                    :search-url="profesorBuscarUrl"
+                                    :initial-label="
+                                        labelProfesorAsignado(
+                                            materia.pivot.profesor_id,
+                                        )
                                     "
-                                >
-                                    <option value="">Sin asignar</option>
-                                    <option
-                                        v-for="profesor in profesoresActivos"
-                                        :key="profesor.id"
-                                        :value="profesor.id"
-                                    >
-                                        {{ profesor.apellido }},
-                                        {{ profesor.nombre }}
-                                    </option>
-                                </select>
+                                    allow-clear
+                                    placeholder="Sin asignar"
+                                    empty-text="No hay profesores activos."
+                                    @update:model-value="
+                                        (value) =>
+                                            onProfesorChange(materia.id, value)
+                                    "
+                                />
                             </td>
                             <td class="px-4 py-2 text-right">
                                 <Dialog>
@@ -301,6 +309,7 @@ const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
                 :options="{ preserveScroll: true }"
                 class="flex items-end gap-2"
                 v-slot="{ errors, processing: adding }"
+                @success="profesorParaAgregar = null"
             >
                 <div class="grid flex-1 gap-2">
                     <Label for="materia_id">Materia</Label>
@@ -323,20 +332,14 @@ const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
 
                 <div class="grid flex-1 gap-2">
                     <Label for="profesor_id">Profesor</Label>
-                    <select
-                        id="profesor_id"
+                    <SearchCombobox
+                        v-model="profesorParaAgregar"
                         name="profesor_id"
-                        :class="selectClass"
-                    >
-                        <option value="">Sin asignar</option>
-                        <option
-                            v-for="profesor in profesoresActivos"
-                            :key="profesor.id"
-                            :value="profesor.id"
-                        >
-                            {{ profesor.apellido }}, {{ profesor.nombre }}
-                        </option>
-                    </select>
+                        :search-url="profesorBuscarUrl"
+                        allow-clear
+                        placeholder="Sin asignar"
+                        empty-text="No hay profesores activos."
+                    />
                     <InputError :message="errors.profesor_id" />
                 </div>
 
@@ -452,28 +455,23 @@ const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
             </div>
 
             <Form
-                v-if="alumnosDisponibles.length > 0"
                 v-bind="CursoAlumnoController.store.form(curso.id)"
                 :options="{ preserveScroll: true }"
                 class="flex items-end gap-2"
                 v-slot="{ errors, processing: matriculando }"
+                @success="alumnoParaMatricular = null"
             >
                 <div class="grid flex-1 gap-2">
                     <Label for="alumno_id">Alumno</Label>
-                    <select
-                        id="alumno_id"
+                    <SearchCombobox
+                        v-model="alumnoParaMatricular"
                         name="alumno_id"
-                        required
-                        :class="selectClass"
-                    >
-                        <option
-                            v-for="a in alumnosDisponibles"
-                            :key="a.id"
-                            :value="a.id"
-                        >
-                            {{ a.apellido }}, {{ a.nombre }}
-                        </option>
-                    </select>
+                        :search-url="
+                            CursoAlumnoController.disponibles.url(curso.id)
+                        "
+                        placeholder="Buscar alumno..."
+                        empty-text="No hay alumnos disponibles para matricular."
+                    />
                     <InputError :message="errors.alumno_id" />
                 </div>
 
@@ -491,9 +489,6 @@ const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
 
                 <Button :disabled="matriculando">Matricular</Button>
             </Form>
-            <p v-else class="text-sm text-muted-foreground">
-                No hay alumnos activos disponibles para matricular.
-            </p>
         </div>
     </div>
 </template>

@@ -7,11 +7,37 @@ use App\Http\Requests\StoreMatriculaRequest;
 use App\Http\Requests\UpdateMatriculaRequest;
 use App\Models\Alumno;
 use App\Models\Curso;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CursoAlumnoController extends Controller
 {
+    /**
+     * Search activo alumnos not yet matriculados in the curso, for use in async comboboxes.
+     */
+    public function disponibles(Request $request, Curso $curso): JsonResponse
+    {
+        $search = $request->string('search')->trim()->toString();
+
+        $alumnos = Alumno::where('activo', true)
+            ->whereNotIn('id', $curso->alumnos()->pluck('alumno_id'))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('nombre', 'like', "%{$search}%")
+                        ->orWhere('apellido', 'like', "%{$search}%")
+                        ->orWhere('dni', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->limit(20)
+            ->get(['id', 'nombre', 'apellido']);
+
+        return response()->json($alumnos);
+    }
+
     /**
      * Matricular an alumno into the curso.
      */

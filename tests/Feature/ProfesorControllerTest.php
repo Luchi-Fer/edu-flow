@@ -46,6 +46,54 @@ class ProfesorControllerTest extends TestCase
         $this->get(route('profesores.index'))->assertOk();
     }
 
+    public function test_users_without_permission_cannot_search_profesores()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('Preceptor');
+        $this->actingAs($user);
+
+        $this->get(route('profesores.buscar'))->assertForbidden();
+    }
+
+    public function test_buscar_excludes_inactive_profesores()
+    {
+        $this->actingAsAdministrador();
+        $activo = Profesor::factory()->create(['activo' => true]);
+        $inactivo = Profesor::factory()->create(['activo' => false]);
+
+        $response = $this->get(route('profesores.buscar'));
+
+        $response->assertOk();
+        $ids = collect($response->json())->pluck('id');
+        $this->assertTrue($ids->contains($activo->id));
+        $this->assertFalse($ids->contains($inactivo->id));
+    }
+
+    public function test_buscar_filters_by_search_term()
+    {
+        $this->actingAsAdministrador();
+        $matematica = Profesor::factory()->create(['activo' => true, 'nombre' => 'Ana', 'apellido' => 'Gomez']);
+        $quimica = Profesor::factory()->create(['activo' => true, 'nombre' => 'Juan', 'apellido' => 'Perez']);
+
+        $response = $this->get(route('profesores.buscar').'?search=Gomez');
+
+        $ids = collect($response->json())->pluck('id');
+        $this->assertTrue($ids->contains($matematica->id));
+        $this->assertFalse($ids->contains($quimica->id));
+    }
+
+    public function test_buscar_limits_results_to_twenty()
+    {
+        $this->actingAsAdministrador();
+        Profesor::factory()->count(25)->create(['activo' => true]);
+
+        $response = $this->get(route('profesores.buscar'));
+
+        $this->assertCount(20, $response->json());
+    }
+
     public function test_administrador_can_view_a_profesors_assignments()
     {
         $this->actingAsAdministrador();

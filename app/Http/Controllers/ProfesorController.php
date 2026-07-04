@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateProfesorRequest;
 use App\Models\CursoMateria;
 use App\Models\Profesor;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,6 +76,28 @@ class ProfesorController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profesor creado.')]);
 
         return to_route('profesores.index');
+    }
+
+    /**
+     * Search activo profesores, for use in async comboboxes.
+     */
+    public function buscar(Request $request): JsonResponse
+    {
+        $search = $request->string('search')->trim()->toString();
+
+        $profesores = Profesor::where('activo', true)
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('nombre', 'like', "%{$search}%")
+                        ->orWhere('apellido', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->limit(20)
+            ->get(['id', 'nombre', 'apellido']);
+
+        return response()->json($profesores);
     }
 
     /**

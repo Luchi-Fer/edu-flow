@@ -24,6 +24,64 @@ class CursoAlumnoControllerTest extends TestCase
         return $user;
     }
 
+    public function test_users_without_permission_cannot_search_alumnos_disponibles()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $curso = Curso::factory()->create();
+
+        $user = User::factory()->create();
+        $user->assignRole('Preceptor');
+        $this->actingAs($user);
+
+        $this->get(route('cursos.alumnos.disponibles', $curso))->assertForbidden();
+    }
+
+    public function test_disponibles_excludes_matriculados_and_inactive_alumnos()
+    {
+        $this->actingAsAdministrador();
+        $curso = Curso::factory()->create();
+        $disponible = Alumno::factory()->create(['activo' => true]);
+        $yaMatriculado = Alumno::factory()->create(['activo' => true]);
+        $inactivo = Alumno::factory()->create(['activo' => false]);
+        $curso->alumnos()->attach($yaMatriculado->id, [
+            'fecha_matriculacion' => '2026-03-01',
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->get(route('cursos.alumnos.disponibles', $curso));
+
+        $response->assertOk();
+        $ids = collect($response->json())->pluck('id');
+        $this->assertTrue($ids->contains($disponible->id));
+        $this->assertFalse($ids->contains($yaMatriculado->id));
+        $this->assertFalse($ids->contains($inactivo->id));
+    }
+
+    public function test_disponibles_filters_by_search_term()
+    {
+        $this->actingAsAdministrador();
+        $curso = Curso::factory()->create();
+        $juan = Alumno::factory()->create(['activo' => true, 'nombre' => 'Juan', 'apellido' => 'Perez']);
+        $ana = Alumno::factory()->create(['activo' => true, 'nombre' => 'Ana', 'apellido' => 'Gomez']);
+
+        $response = $this->get(route('cursos.alumnos.disponibles', $curso).'?search=Perez');
+
+        $ids = collect($response->json())->pluck('id');
+        $this->assertTrue($ids->contains($juan->id));
+        $this->assertFalse($ids->contains($ana->id));
+    }
+
+    public function test_disponibles_limits_results_to_twenty()
+    {
+        $this->actingAsAdministrador();
+        $curso = Curso::factory()->create();
+        Alumno::factory()->count(25)->create(['activo' => true]);
+
+        $response = $this->get(route('cursos.alumnos.disponibles', $curso));
+
+        $this->assertCount(20, $response->json());
+    }
+
     public function test_users_without_permission_cannot_matricular_alumnos()
     {
         $this->seed(RolesAndPermissionsSeeder::class);

@@ -24,6 +24,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->except('show')
         ->middleware('can:gestionar-alumnos');
 
+    Route::middleware('can:gestionar-profesores')->group(function () {
+        Route::get('profesores/buscar', [ProfesorController::class, 'buscar'])
+            ->name('profesores.buscar');
+    });
+
     Route::resource('profesores', ProfesorController::class)
         ->parameters(['profesores' => 'profesor'])
         ->middleware('can:gestionar-profesores');
@@ -49,6 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('cursos/{curso}/materias/{materia}', [CursoMateriaController::class, 'destroy'])
             ->name('cursos.materias.destroy');
 
+        Route::get('cursos/{curso}/alumnos-disponibles', [CursoAlumnoController::class, 'disponibles'])
+            ->name('cursos.alumnos.disponibles');
         Route::post('cursos/{curso}/alumnos', [CursoAlumnoController::class, 'store'])
             ->name('cursos.alumnos.store');
         Route::patch('cursos/{curso}/alumnos/{alumno}', [CursoAlumnoController::class, 'update'])
