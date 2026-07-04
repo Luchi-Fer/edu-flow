@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import CursoAlumnoController from '@/actions/App/Http/Controllers/CursoAlumnoController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import CursoMateriaController from '@/actions/App/Http/Controllers/CursoMateriaController';
+import HorarioController from '@/actions/App/Http/Controllers/HorarioController';
 import ProfesorController from '@/actions/App/Http/Controllers/ProfesorController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -21,11 +23,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDateFormat } from '@/composables/useDateFormat';
+import { DIA_SEMANA_ABREVIADO, DIAS_SEMANA } from '@/lib/diaSemana';
 import { ETIQUETAS_ANIO_POR_NIVEL } from '@/lib/nivelEducativo';
 import type { Alumno, CicloLectivo, Curso, Materia, Profesor } from '@/types';
 
+type HorarioSlot = {
+    id: number;
+    dia_semana: string;
+    hora_inicio: string;
+    hora_fin: string;
+};
+
 type MateriaAsignada = Pick<Materia, 'id' | 'nombre'> & {
-    pivot: { profesor_id: number | null };
+    pivot: { profesor_id: number | null; horarios: HorarioSlot[] };
 };
 
 type ProfesorOption = Pick<Profesor, 'id' | 'nombre' | 'apellido'>;
@@ -71,6 +81,13 @@ function onProfesorChange(materiaId: number, profesorId: number | null) {
     router.patch(
         CursoMateriaController.update.url([props.curso.id, materiaId]),
         { profesor_id: profesorId },
+        { preserveScroll: true },
+    );
+}
+
+function eliminarHorario(materiaId: number, horarioId: number) {
+    router.delete(
+        HorarioController.destroy.url([props.curso.id, materiaId, horarioId]),
         { preserveScroll: true },
     );
 }
@@ -216,6 +233,7 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
                         <tr>
                             <th class="px-4 py-2 font-medium">Materia</th>
                             <th class="px-4 py-2 font-medium">Profesor</th>
+                            <th class="px-4 py-2 font-medium">Horarios</th>
                             <th class="px-4 py-2 font-medium">
                                 <span class="sr-only">Acciones</span>
                             </th>
@@ -245,6 +263,160 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
                                             onProfesorChange(materia.id, value)
                                     "
                                 />
+                            </td>
+                            <td class="px-4 py-2">
+                                <div class="flex flex-wrap items-center gap-1">
+                                    <span
+                                        v-for="horario in materia.pivot
+                                            .horarios"
+                                        :key="horario.id"
+                                        class="inline-flex items-center gap-1 rounded-md border bg-muted/50 px-2 py-0.5 text-xs whitespace-nowrap"
+                                    >
+                                        {{
+                                            DIA_SEMANA_ABREVIADO[
+                                                horario.dia_semana
+                                            ]
+                                        }}
+                                        {{ horario.hora_inicio.slice(0, 5) }}–{{
+                                            horario.hora_fin.slice(0, 5)
+                                        }}
+                                        <button
+                                            type="button"
+                                            class="text-muted-foreground hover:text-destructive"
+                                            :aria-label="`Quitar horario de ${materia.nombre}`"
+                                            @click="
+                                                eliminarHorario(
+                                                    materia.id,
+                                                    horario.id,
+                                                )
+                                            "
+                                        >
+                                            <X class="size-3" />
+                                        </button>
+                                    </span>
+
+                                    <Dialog>
+                                        <DialogTrigger as-child>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                class="h-6 px-2 text-xs"
+                                            >
+                                                + Horario
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <Form
+                                                v-bind="
+                                                    HorarioController.store.form(
+                                                        [curso.id, materia.id],
+                                                    )
+                                                "
+                                                :options="{
+                                                    preserveScroll: true,
+                                                }"
+                                                v-slot="{
+                                                    errors,
+                                                    processing:
+                                                        agregandoHorario,
+                                                }"
+                                            >
+                                                <DialogHeader class="space-y-3">
+                                                    <DialogTitle>
+                                                        Agregar horario —
+                                                        {{ materia.nombre }}
+                                                    </DialogTitle>
+                                                </DialogHeader>
+
+                                                <div
+                                                    class="grid grid-cols-3 gap-2 py-4"
+                                                >
+                                                    <div class="grid gap-2">
+                                                        <Label for="dia_semana">
+                                                            Día
+                                                        </Label>
+                                                        <select
+                                                            id="dia_semana"
+                                                            name="dia_semana"
+                                                            required
+                                                            :class="selectClass"
+                                                        >
+                                                            <option
+                                                                v-for="dia in DIAS_SEMANA"
+                                                                :key="dia.value"
+                                                                :value="
+                                                                    dia.value
+                                                                "
+                                                            >
+                                                                {{ dia.label }}
+                                                            </option>
+                                                        </select>
+                                                        <InputError
+                                                            :message="
+                                                                errors.dia_semana
+                                                            "
+                                                        />
+                                                    </div>
+
+                                                    <div class="grid gap-2">
+                                                        <Label
+                                                            for="hora_inicio"
+                                                        >
+                                                            Desde
+                                                        </Label>
+                                                        <Input
+                                                            id="hora_inicio"
+                                                            type="time"
+                                                            name="hora_inicio"
+                                                            required
+                                                        />
+                                                        <InputError
+                                                            :message="
+                                                                errors.hora_inicio
+                                                            "
+                                                        />
+                                                    </div>
+
+                                                    <div class="grid gap-2">
+                                                        <Label for="hora_fin">
+                                                            Hasta
+                                                        </Label>
+                                                        <Input
+                                                            id="hora_fin"
+                                                            type="time"
+                                                            name="hora_fin"
+                                                            required
+                                                        />
+                                                        <InputError
+                                                            :message="
+                                                                errors.hora_fin
+                                                            "
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <DialogFooter class="gap-2">
+                                                    <DialogClose as-child>
+                                                        <Button
+                                                            variant="secondary"
+                                                        >
+                                                            Cancelar
+                                                        </Button>
+                                                    </DialogClose>
+
+                                                    <Button
+                                                        type="submit"
+                                                        :disabled="
+                                                            agregandoHorario
+                                                        "
+                                                    >
+                                                        Agregar
+                                                    </Button>
+                                                </DialogFooter>
+                                            </Form>
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
                             </td>
                             <td class="px-4 py-2 text-right">
                                 <Dialog>
@@ -293,7 +465,7 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
                         </tr>
                         <tr v-if="curso.materias.length === 0">
                             <td
-                                colspan="3"
+                                colspan="4"
                                 class="px-4 py-6 text-center text-muted-foreground"
                             >
                                 Todavía no hay materias asignadas.

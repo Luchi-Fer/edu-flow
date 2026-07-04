@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\CursoMateriaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class CursoMateria extends Pivot
@@ -38,5 +39,13 @@ class CursoMateria extends Pivot
     public function profesor(): BelongsTo
     {
         return $this->belongsTo(Profesor::class);
+    }
+
+    /**
+     * @return HasMany<Horario, $this>
+     */
+    public function horarios(): HasMany
+    {
+        return $this->hasMany(Horario::class, 'curso_materia_id');
     }
 }

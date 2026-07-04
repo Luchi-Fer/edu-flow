@@ -53,7 +53,7 @@ class Profesor extends Model
     {
         return $this->belongsToMany(Curso::class, 'curso_materia')
             ->using(CursoMateria::class)
-            ->withPivot('materia_id')
+            ->withPivot('id', 'materia_id')
             ->withTimestamps();
     }
 
@@ -64,7 +64,7 @@ class Profesor extends Model
     {
         return $this->belongsToMany(Materia::class, 'curso_materia')
             ->using(CursoMateria::class)
-            ->withPivot('curso_id')
+            ->withPivot('id', 'curso_id')
             ->withTimestamps();
     }
 }

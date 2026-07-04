@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @property-read CursoMateria|null $pivot
+ */
 #[Fillable(['nombre', 'descripcion'])]
 class Materia extends Model
 {
@@ -21,7 +24,7 @@ class Materia extends Model
     {
         return $this->belongsToMany(Curso::class, 'curso_materia')
             ->using(CursoMateria::class)
-            ->withPivot('profesor_id')
+            ->withPivot('id', 'profesor_id')
             ->withTimestamps();
     }
 }

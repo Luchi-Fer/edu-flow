@@ -126,6 +126,8 @@ function onSelect(value: unknown) {
 
         <ComboboxPortal>
             <ComboboxContent
+                position="popper"
+                :side-offset="4"
                 class="z-50 max-h-64 w-72 overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
             >
                 <ComboboxViewport>

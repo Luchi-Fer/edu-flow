@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
 use App\Models\CicloLectivo;
 use App\Models\Curso;
+use App\Models\Horario;
 use App\Models\Materia;
 use App\Models\Profesor;
 use Illuminate\Http\RedirectResponse;
@@ -69,6 +70,19 @@ class CursoController extends Controller
             'materias' => fn ($query) => $query->orderBy('nombre'),
             'alumnos' => fn ($query) => $query->orderBy('apellido'),
         ]);
+
+        $horariosPorCursoMateria = Horario::whereIn('curso_materia_id', $curso->materias->pluck('pivot.id'))
+            ->get()
+            ->groupBy('curso_materia_id');
+
+        foreach ($curso->materias as $materia) {
+            $materia->pivot->setRelation(
+                'horarios',
+                $horariosPorCursoMateria->get($materia->pivot->id, collect())
+                    ->sortBy(fn (Horario $horario) => [$horario->dia_semana->orden(), $horario->hora_inicio])
+                    ->values(),
+            );
+        }
 
         $profesorIdsAsignados = $curso->materias->pluck('pivot.profesor_id')->filter()->unique();
 
