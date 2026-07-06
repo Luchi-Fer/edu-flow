@@ -108,6 +108,14 @@ function onSearch() {
                             <div class="flex justify-end gap-2">
                                 <Button as-child variant="outline" size="sm">
                                     <Link
+                                        :href="AlumnoController.show(alumno.id)"
+                                    >
+                                        Ver
+                                    </Link>
+                                </Button>
+
+                                <Button as-child variant="outline" size="sm">
+                                    <Link
                                         :href="AlumnoController.edit(alumno.id)"
                                     >
                                         Editar
