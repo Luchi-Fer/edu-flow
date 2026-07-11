@@ -21,7 +21,7 @@ class CursoFactory extends Factory
         return [
             'ciclo_lectivo_id' => CicloLectivo::factory(),
             'nivel' => fake()->randomElement(['primaria', 'secundaria']),
-            'anio' => fake()->numberBetween(1, 6),
+            'anio_grado' => fake()->numberBetween(1, 6),
             'division' => fake()->randomElement(['A', 'B', 'C']),
             'turno' => fake()->randomElement(['mañana', 'tarde']),
         ];

@@ -62,7 +62,7 @@ class CursoControllerTest extends TestCase
         $response = $this->post(route('cursos.store'), [
             'ciclo_lectivo_id' => $ciclo->id,
             'nivel' => 'primaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
             'turno' => 'mañana',
         ]);
@@ -71,7 +71,7 @@ class CursoControllerTest extends TestCase
         $this->assertDatabaseHas('cursos', [
             'ciclo_lectivo_id' => $ciclo->id,
             'nivel' => 'primaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
         ]);
     }
@@ -83,21 +83,21 @@ class CursoControllerTest extends TestCase
         Curso::factory()->create([
             'ciclo_lectivo_id' => $ciclo->id,
             'nivel' => 'primaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
         ]);
 
         $response = $this->post(route('cursos.store'), [
             'ciclo_lectivo_id' => $ciclo->id,
             'nivel' => 'primaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
         ]);
 
-        $response->assertSessionHasErrors('anio');
+        $response->assertSessionHasErrors('anio_grado');
     }
 
-    public function test_the_same_anio_and_division_are_allowed_in_a_different_ciclo_lectivo()
+    public function test_the_same_anio_grado_and_division_are_allowed_in_a_different_ciclo_lectivo()
     {
         $this->actingAsAdministrador();
         $cicloA = CicloLectivo::factory()->create(['anio' => 2025]);
@@ -105,14 +105,14 @@ class CursoControllerTest extends TestCase
         Curso::factory()->create([
             'ciclo_lectivo_id' => $cicloA->id,
             'nivel' => 'primaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
         ]);
 
         $response = $this->post(route('cursos.store'), [
             'ciclo_lectivo_id' => $cicloB->id,
             'nivel' => 'primaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
         ]);
 
@@ -120,21 +120,21 @@ class CursoControllerTest extends TestCase
         $this->assertDatabaseHas('cursos', ['ciclo_lectivo_id' => $cicloB->id, 'division' => 'A']);
     }
 
-    public function test_the_same_anio_and_division_are_allowed_in_a_different_nivel()
+    public function test_the_same_anio_grado_and_division_are_allowed_in_a_different_nivel()
     {
         $this->actingAsAdministrador();
         $ciclo = CicloLectivo::factory()->create();
         Curso::factory()->create([
             'ciclo_lectivo_id' => $ciclo->id,
             'nivel' => 'primaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
         ]);
 
         $response = $this->post(route('cursos.store'), [
             'ciclo_lectivo_id' => $ciclo->id,
             'nivel' => 'secundaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
         ]);
 
@@ -142,7 +142,7 @@ class CursoControllerTest extends TestCase
         $this->assertDatabaseHas('cursos', [
             'ciclo_lectivo_id' => $ciclo->id,
             'nivel' => 'secundaria',
-            'anio' => 1,
+            'anio_grado' => 1,
             'division' => 'A',
         ]);
     }
@@ -150,8 +150,8 @@ class CursoControllerTest extends TestCase
     public function test_curso_label_reflects_the_nivel_specific_grado_or_anio_wording()
     {
         $ciclo = CicloLectivo::factory()->create();
-        $primaria = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'primaria', 'anio' => 1, 'division' => 'A']);
-        $secundaria = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'secundaria', 'anio' => 4, 'division' => 'B']);
+        $primaria = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'primaria', 'anio_grado' => 1, 'division' => 'A']);
+        $secundaria = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'secundaria', 'anio_grado' => 4, 'division' => 'B']);
 
         $this->assertSame('1er grado A', $primaria->label);
         $this->assertSame('1er año B', $secundaria->label);
@@ -165,7 +165,7 @@ class CursoControllerTest extends TestCase
         $response = $this->put(route('cursos.update', $curso), [
             'ciclo_lectivo_id' => $curso->ciclo_lectivo_id,
             'nivel' => $curso->nivel->value,
-            'anio' => $curso->anio,
+            'anio_grado' => $curso->anio_grado,
             'division' => 'Z',
             'turno' => 'tarde',
         ]);

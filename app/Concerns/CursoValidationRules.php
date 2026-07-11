@@ -17,7 +17,7 @@ trait CursoValidationRules
         return [
             'ciclo_lectivo_id' => ['required', 'integer', 'exists:ciclos_lectivos,id'],
             'nivel' => ['required', Rule::in(['primaria', 'secundaria'])],
-            'anio' => [
+            'anio_grado' => [
                 'required',
                 'integer',
                 'between:1,6',

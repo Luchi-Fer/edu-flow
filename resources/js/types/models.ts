@@ -66,7 +66,7 @@ export type Curso = {
     id: number;
     ciclo_lectivo_id: number;
     nivel: 'primaria' | 'secundaria';
-    anio: number;
+    anio_grado: number;
     division: string;
     turno: string | null;
     label: string;

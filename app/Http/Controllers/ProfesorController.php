@@ -111,7 +111,7 @@ class ProfesorController extends Controller
             ->sortBy(fn (CursoMateria $asignacion) => [
                 $asignacion->curso->cicloLectivo->anio,
                 $asignacion->curso->nivel->value,
-                $asignacion->curso->anio,
+                $asignacion->curso->anio_grado,
                 $asignacion->curso->division,
             ])
             ->values();

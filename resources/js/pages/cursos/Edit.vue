@@ -22,9 +22,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useDateFormat } from '@/composables/useDateFormat';
 import { DIA_SEMANA_ABREVIADO, DIAS_SEMANA } from '@/lib/diaSemana';
-import { ETIQUETAS_ANIO_POR_NIVEL } from '@/lib/nivelEducativo';
 import type { Alumno, CicloLectivo, Curso, Materia, Profesor } from '@/types';
 
 type HorarioSlot = {
@@ -57,6 +63,7 @@ const props = defineProps<{
     ciclosLectivos: CicloLectivo[];
     materiasDisponibles: Pick<Materia, 'id' | 'nombre'>[];
     profesoresAsignados: ProfesorOption[];
+    etiquetasAnioPorNivel: Record<'primaria' | 'secundaria', string[]>;
 }>();
 
 defineOptions({
@@ -68,8 +75,7 @@ defineOptions({
     },
 });
 
-const selectClass =
-    'h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
+const TURNO_SIN_ESPECIFICAR = 'sin_especificar';
 
 function labelProfesorAsignado(profesorId: number | null): string | null {
     const profesor = props.profesoresAsignados.find((p) => p.id === profesorId);
@@ -92,9 +98,7 @@ function eliminarHorario(materiaId: number, horarioId: number) {
     );
 }
 
-function onEstadoChange(alumnoId: number, event: Event) {
-    const value = (event.target as HTMLSelectElement).value;
-
+function onEstadoChange(alumnoId: number, value: string) {
     router.patch(
         CursoAlumnoController.update.url([props.curso.id, alumnoId]),
         { estado: value },
@@ -106,8 +110,26 @@ const today = new Date().toISOString().slice(0, 10);
 
 const { formatDate } = useDateFormat();
 
+const cicloLectivoId = ref(props.curso.ciclo_lectivo_id.toString());
 const nivel = ref<'primaria' | 'secundaria'>(props.curso.nivel);
-const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
+const anioGradoValue = ref(props.curso.anio_grado.toString());
+const turnoValue = ref(props.curso.turno ?? TURNO_SIN_ESPECIFICAR);
+const etiquetasAnioGrado = computed(
+    () => props.etiquetasAnioPorNivel[nivel.value],
+);
+
+const diaSemanaSeleccionado = ref<string>(DIAS_SEMANA[0].value);
+
+const materiaSeleccionadaManual = ref<string | null>(null);
+const materiaSeleccionada = computed({
+    get: () =>
+        materiaSeleccionadaManual.value ??
+        props.materiasDisponibles[0]?.id.toString() ??
+        '',
+    set: (value: string) => {
+        materiaSeleccionadaManual.value = value;
+    },
+});
 
 const profesorParaAgregar = ref<number | null>(null);
 const alumnoParaMatricular = ref<number | null>(null);
@@ -128,57 +150,56 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
             <div class="grid grid-cols-5 gap-4">
                 <div class="grid gap-2">
                     <Label for="ciclo_lectivo_id">Ciclo lectivo</Label>
-                    <select
-                        id="ciclo_lectivo_id"
-                        name="ciclo_lectivo_id"
-                        required
-                        :value="curso.ciclo_lectivo_id"
-                        :class="selectClass"
-                    >
-                        <option
-                            v-for="ciclo in props.ciclosLectivos"
-                            :key="ciclo.id"
-                            :value="ciclo.id"
-                        >
-                            {{ ciclo.anio }}
-                        </option>
-                    </select>
+                    <Select v-model="cicloLectivoId" name="ciclo_lectivo_id" required>
+                        <SelectTrigger id="ciclo_lectivo_id" class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="ciclo in props.ciclosLectivos"
+                                :key="ciclo.id"
+                                :value="ciclo.id.toString()"
+                            >
+                                {{ ciclo.anio }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
                     <InputError :message="errors.ciclo_lectivo_id" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="nivel">Nivel</Label>
-                    <select
-                        id="nivel"
-                        name="nivel"
-                        v-model="nivel"
-                        required
-                        :class="selectClass"
-                    >
-                        <option value="primaria">Primaria</option>
-                        <option value="secundaria">Secundaria</option>
-                    </select>
+                    <Select v-model="nivel" name="nivel" required>
+                        <SelectTrigger id="nivel" class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="primaria">Primaria</SelectItem>
+                            <SelectItem value="secundaria">
+                                Secundaria
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
                     <InputError :message="errors.nivel" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="anio">Año</Label>
-                    <select
-                        id="anio"
-                        name="anio"
-                        required
-                        :value="curso.anio"
-                        :class="selectClass"
-                    >
-                        <option
-                            v-for="(etiqueta, indice) in etiquetasAnio"
-                            :key="etiqueta"
-                            :value="indice + 1"
-                        >
-                            {{ etiqueta }}
-                        </option>
-                    </select>
-                    <InputError :message="errors.anio" />
+                    <Label for="anio_grado">Año</Label>
+                    <Select v-model="anioGradoValue" name="anio_grado" required>
+                        <SelectTrigger id="anio_grado" class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="(etiqueta, indice) in etiquetasAnioGrado"
+                                :key="etiqueta"
+                                :value="(indice + 1).toString()"
+                            >
+                                {{ etiqueta }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <InputError :message="errors.anio_grado" />
                 </div>
 
                 <div class="grid gap-2">
@@ -194,17 +215,28 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
 
                 <div class="grid gap-2">
                     <Label for="turno">Turno</Label>
-                    <select
-                        id="turno"
+                    <Select v-model="turnoValue">
+                        <SelectTrigger id="turno" class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem :value="TURNO_SIN_ESPECIFICAR">
+                                Sin especificar
+                            </SelectItem>
+                            <SelectItem value="mañana">Mañana</SelectItem>
+                            <SelectItem value="tarde">Tarde</SelectItem>
+                            <SelectItem value="noche">Noche</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <input
+                        type="hidden"
                         name="turno"
-                        :value="curso.turno ?? ''"
-                        :class="selectClass"
-                    >
-                        <option value="">Sin especificar</option>
-                        <option value="mañana">Mañana</option>
-                        <option value="tarde">Tarde</option>
-                        <option value="noche">Noche</option>
-                    </select>
+                        :value="
+                            turnoValue === TURNO_SIN_ESPECIFICAR
+                                ? ''
+                                : turnoValue
+                        "
+                    />
                     <InputError :message="errors.turno" />
                 </div>
             </div>
@@ -335,22 +367,35 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
                                                         <Label for="dia_semana">
                                                             Día
                                                         </Label>
-                                                        <select
-                                                            id="dia_semana"
+                                                        <Select
+                                                            v-model="
+                                                                diaSemanaSeleccionado
+                                                            "
                                                             name="dia_semana"
                                                             required
-                                                            :class="selectClass"
                                                         >
-                                                            <option
-                                                                v-for="dia in DIAS_SEMANA"
-                                                                :key="dia.value"
-                                                                :value="
-                                                                    dia.value
-                                                                "
+                                                            <SelectTrigger
+                                                                id="dia_semana"
+                                                                class="w-full"
                                                             >
-                                                                {{ dia.label }}
-                                                            </option>
-                                                        </select>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem
+                                                                    v-for="dia in DIAS_SEMANA"
+                                                                    :key="
+                                                                        dia.value
+                                                                    "
+                                                                    :value="
+                                                                        dia.value
+                                                                    "
+                                                                >
+                                                                    {{
+                                                                        dia.label
+                                                                    }}
+                                                                </SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
                                                         <InputError
                                                             :message="
                                                                 errors.dia_semana
@@ -481,24 +526,27 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
                 :options="{ preserveScroll: true }"
                 class="flex items-end gap-2"
                 v-slot="{ errors, processing: adding }"
-                @success="profesorParaAgregar = null"
+                @success="
+                    profesorParaAgregar = null;
+                    materiaSeleccionadaManual = null;
+                "
             >
                 <div class="grid flex-1 gap-2">
                     <Label for="materia_id">Materia</Label>
-                    <select
-                        id="materia_id"
-                        name="materia_id"
-                        required
-                        :class="selectClass"
-                    >
-                        <option
-                            v-for="m in materiasDisponibles"
-                            :key="m.id"
-                            :value="m.id"
-                        >
-                            {{ m.nombre }}
-                        </option>
-                    </select>
+                    <Select v-model="materiaSeleccionada" name="materia_id" required>
+                        <SelectTrigger id="materia_id" class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="m in materiasDisponibles"
+                                :key="m.id"
+                                :value="m.id.toString()"
+                            >
+                                {{ m.nombre }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
                     <InputError :message="errors.materia_id" />
                 </div>
 
@@ -558,15 +606,31 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
                                 }}
                             </td>
                             <td class="px-4 py-2">
-                                <select
-                                    :value="alumno.pivot.estado"
-                                    class="h-8 w-full max-w-xs rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                    @change="onEstadoChange(alumno.id, $event)"
+                                <Select
+                                    :model-value="alumno.pivot.estado"
+                                    @update:model-value="
+                                        (value) =>
+                                            onEstadoChange(
+                                                alumno.id,
+                                                value as string,
+                                            )
+                                    "
                                 >
-                                    <option value="activo">Activo</option>
-                                    <option value="baja">Baja</option>
-                                    <option value="egresado">Egresado</option>
-                                </select>
+                                    <SelectTrigger size="sm" class="w-full max-w-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="activo">
+                                            Activo
+                                        </SelectItem>
+                                        <SelectItem value="baja">
+                                            Baja
+                                        </SelectItem>
+                                        <SelectItem value="egresado">
+                                            Egresado
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </td>
                             <td class="px-4 py-2 text-right">
                                 <Dialog>

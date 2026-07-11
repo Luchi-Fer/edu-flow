@@ -7,6 +7,13 @@ import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
     Dialog,
     DialogClose,
     DialogContent,
@@ -15,7 +22,16 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import type { CicloLectivo, Curso } from '@/types';
+
+const TODOS = 'todos';
 
 type PaginationLink = {
     url: string | null;
@@ -46,12 +62,14 @@ const canTomarAsistencia = computed(
     () => page.props.can['tomar-asistencia'] as boolean,
 );
 
-function onFilterChange(event: Event) {
-    const value = (event.target as HTMLSelectElement).value;
+const selectedCicloLectivo = computed(
+    () => props.cicloLectivoId?.toString() ?? TODOS,
+);
 
+function onFilterChange(value: string | null) {
     router.get(
         CursoController.index().url,
-        value ? { ciclo_lectivo_id: value } : {},
+        { ciclo_lectivo_id: value },
         { preserveState: true, replace: true },
     );
 }
@@ -71,146 +89,124 @@ function onFilterChange(event: Event) {
             </Button>
         </div>
 
-        <select
-            :value="props.cicloLectivoId ?? ''"
-            class="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm"
-            @change="onFilterChange"
+        <Select
+            :model-value="selectedCicloLectivo"
+            @update:model-value="(value) => onFilterChange(value as string)"
         >
-            <option value="">Todos los ciclos lectivos</option>
-            <option
-                v-for="ciclo in ciclosLectivos"
-                :key="ciclo.id"
-                :value="ciclo.id"
-            >
-                {{ ciclo.anio }}
-            </option>
-        </select>
+            <SelectTrigger class="w-48">
+                <SelectValue placeholder="Ciclo lectivo" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem :value="TODOS">
+                    Todos los ciclos lectivos
+                </SelectItem>
+                <SelectItem
+                    v-for="ciclo in ciclosLectivos"
+                    :key="ciclo.id"
+                    :value="ciclo.id.toString()"
+                >
+                    {{ ciclo.anio }}
+                </SelectItem>
+            </SelectContent>
+        </Select>
 
-        <div class="overflow-hidden rounded-md border">
-            <table class="w-full text-sm">
-                <thead class="bg-muted/50 text-left">
-                    <tr>
-                        <th class="px-4 py-2 font-medium">Ciclo lectivo</th>
-                        <th class="px-4 py-2 font-medium">Nivel</th>
-                        <th class="px-4 py-2 font-medium">Curso</th>
-                        <th class="px-4 py-2 font-medium">Turno</th>
-                        <th class="px-4 py-2 font-medium">
-                            <span class="sr-only">Acciones</span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        v-for="curso in cursos.data"
-                        :key="curso.id"
-                        class="border-t"
-                    >
-                        <td class="px-4 py-2">
+        <p
+            v-if="cursos.data.length === 0"
+            class="rounded-md border border-dashed p-6 text-center text-muted-foreground"
+        >
+            No hay cursos que coincidan con el filtro.
+        </p>
+
+        <div
+            v-else
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+            <Card v-for="curso in cursos.data" :key="curso.id">
+                <CardHeader>
+                    <div class="flex items-center justify-between">
+                        <Badge variant="secondary">
+                            {{
+                                curso.nivel === 'primaria'
+                                    ? 'Primaria'
+                                    : 'Secundaria'
+                            }}
+                        </Badge>
+                        <span class="text-xs text-muted-foreground">
                             {{ curso.ciclo_lectivo.anio }}
-                        </td>
-                        <td class="px-4 py-2">
-                            <Badge variant="secondary">
-                                {{
-                                    curso.nivel === 'primaria'
-                                        ? 'Primaria'
-                                        : 'Secundaria'
-                                }}
-                            </Badge>
-                        </td>
-                        <td class="px-4 py-2">
-                            {{ curso.label }}
-                        </td>
-                        <td class="px-4 py-2">{{ curso.turno ?? '—' }}</td>
-                        <td class="px-4 py-2 text-right">
-                            <div class="flex justify-end gap-2">
-                                <Button
-                                    v-if="canTomarAsistencia"
-                                    as-child
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    <Link
-                                        :href="
-                                            AsistenciaController.show(curso.id)
-                                        "
-                                    >
-                                        Tomar asistencia
-                                    </Link>
-                                </Button>
+                        </span>
+                    </div>
+                    <CardTitle class="text-lg">{{ curso.label }}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p class="text-sm text-muted-foreground">
+                        Turno: {{ curso.turno ?? '—' }}
+                    </p>
+                </CardContent>
+                <CardFooter class="flex flex-wrap gap-2">
+                    <Button
+                        v-if="canTomarAsistencia"
+                        as-child
+                        variant="outline"
+                        size="sm"
+                    >
+                        <Link :href="AsistenciaController.show(curso.id)">
+                            Tomar asistencia
+                        </Link>
+                    </Button>
 
-                                <Button
-                                    v-if="canGestionarCursos"
-                                    as-child
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    <Link
-                                        :href="CursoController.edit(curso.id)"
-                                    >
-                                        Editar
-                                    </Link>
-                                </Button>
+                    <Button
+                        v-if="canGestionarCursos"
+                        as-child
+                        variant="outline"
+                        size="sm"
+                    >
+                        <Link :href="CursoController.edit(curso.id)">
+                            Editar
+                        </Link>
+                    </Button>
 
-                                <Dialog v-if="canGestionarCursos">
-                                    <DialogTrigger as-child>
-                                        <Button variant="destructive" size="sm">
-                                            Eliminar
+                    <Dialog v-if="canGestionarCursos">
+                        <DialogTrigger as-child>
+                            <Button variant="destructive" size="sm">
+                                Eliminar
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <Form
+                                v-bind="CursoController.destroy.form(curso.id)"
+                                :options="{ preserveScroll: true }"
+                                v-slot="{ processing }"
+                            >
+                                <DialogHeader class="space-y-3">
+                                    <DialogTitle>
+                                        ¿Eliminar el curso {{ curso.label }}
+                                        ({{ curso.ciclo_lectivo.anio }})?
+                                    </DialogTitle>
+                                </DialogHeader>
+
+                                <DialogFooter class="mt-6 gap-2">
+                                    <DialogClose as-child>
+                                        <Button variant="secondary">
+                                            Cancelar
                                         </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <Form
-                                            v-bind="
-                                                CursoController.destroy.form(
-                                                    curso.id,
-                                                )
-                                            "
-                                            :options="{ preserveScroll: true }"
-                                            v-slot="{ processing }"
-                                        >
-                                            <DialogHeader class="space-y-3">
-                                                <DialogTitle>
-                                                    ¿Eliminar el curso
-                                                    {{ curso.label }} ({{
-                                                        curso.ciclo_lectivo
-                                                            .anio
-                                                    }})?
-                                                </DialogTitle>
-                                            </DialogHeader>
+                                    </DialogClose>
 
-                                            <DialogFooter class="mt-6 gap-2">
-                                                <DialogClose as-child>
-                                                    <Button variant="secondary">
-                                                        Cancelar
-                                                    </Button>
-                                                </DialogClose>
-
-                                                <Button
-                                                    type="submit"
-                                                    variant="destructive"
-                                                    :disabled="processing"
-                                                >
-                                                    Eliminar
-                                                </Button>
-                                            </DialogFooter>
-                                        </Form>
-                                    </DialogContent>
-                                </Dialog>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr v-if="cursos.data.length === 0">
-                        <td
-                            colspan="5"
-                            class="px-4 py-6 text-center text-muted-foreground"
-                        >
-                            No hay cursos que coincidan con el filtro.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                    <Button
+                                        type="submit"
+                                        variant="destructive"
+                                        :disabled="processing"
+                                    >
+                                        Eliminar
+                                    </Button>
+                                </DialogFooter>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
+                </CardFooter>
+            </Card>
         </div>
 
-        <div v-if="cursos.links.length > 3" class="flex gap-1">
+        <div v-if="cursos.links.length > 3" class="flex flex-wrap gap-1">
             <template v-for="(link, index) in cursos.links" :key="index">
                 <span
                     v-if="!link.url"
@@ -226,6 +222,7 @@ function onFilterChange(event: Event) {
                             ? 'bg-primary text-primary-foreground'
                             : 'hover:bg-muted'
                     "
+                    preserve-scroll
                 >
                     <span v-html="link.label" />
                 </Link>

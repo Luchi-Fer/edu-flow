@@ -99,8 +99,8 @@ class ProfesorControllerTest extends TestCase
         $this->actingAsAdministrador();
         $profesor = Profesor::factory()->create();
         $ciclo = CicloLectivo::factory()->create(['anio' => 2026]);
-        $cursoA = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'secundaria', 'anio' => 4, 'division' => 'A']);
-        $cursoB = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'primaria', 'anio' => 5, 'division' => 'A']);
+        $cursoA = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'secundaria', 'anio_grado' => 4, 'division' => 'A']);
+        $cursoB = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id, 'nivel' => 'primaria', 'anio_grado' => 5, 'division' => 'A']);
         $matematica = Materia::factory()->create(['nombre' => 'Matemática']);
         $quimica = Materia::factory()->create(['nombre' => 'Química']);
 

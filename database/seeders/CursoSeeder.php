@@ -31,10 +31,10 @@ class CursoSeeder extends Seeder
         $cursos = [];
 
         foreach (NivelEducativo::cases() as $nivel) {
-            foreach (range(1, 6) as $anio) {
+            foreach (range(1, 6) as $anioGrado) {
                 foreach (['A', 'B'] as $division) {
                     $curso = Curso::firstOrCreate(
-                        ['ciclo_lectivo_id' => $ciclo->id, 'nivel' => $nivel, 'anio' => $anio, 'division' => $division],
+                        ['ciclo_lectivo_id' => $ciclo->id, 'nivel' => $nivel, 'anio_grado' => $anioGrado, 'division' => $division],
                         ['turno' => $division === 'A' ? 'mañana' : 'tarde'],
                     );
 

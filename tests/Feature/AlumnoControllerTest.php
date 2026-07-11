@@ -65,8 +65,8 @@ class AlumnoControllerTest extends TestCase
 
         $ciclo2025 = CicloLectivo::factory()->create(['anio' => 2025]);
         $ciclo2026 = CicloLectivo::factory()->create(['anio' => 2026]);
-        $curso2025 = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo2025->id, 'nivel' => 'primaria', 'anio' => 1]);
-        $curso2026 = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo2026->id, 'nivel' => 'primaria', 'anio' => 2]);
+        $curso2025 = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo2025->id, 'nivel' => 'primaria', 'anio_grado' => 1]);
+        $curso2026 = Curso::factory()->create(['ciclo_lectivo_id' => $ciclo2026->id, 'nivel' => 'primaria', 'anio_grado' => 2]);
 
         $curso2025->alumnos()->attach($alumno->id, ['fecha_matriculacion' => '2025-03-01', 'estado' => 'egresado']);
         $curso2026->alumnos()->attach($alumno->id, ['fecha_matriculacion' => '2026-03-01', 'estado' => 'activo']);

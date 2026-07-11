@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['ciclo_lectivo_id', 'nivel', 'anio', 'division', 'turno'])]
+#[Fillable(['ciclo_lectivo_id', 'nivel', 'anio_grado', 'division', 'turno'])]
 class Curso extends Model
 {
     /** @use HasFactory<CursoFactory> */
@@ -83,17 +83,12 @@ class Curso extends Model
     protected function label(): Attribute
     {
         return Attribute::make(
-            get: fn () => self::etiquetaAnio($this->nivel, $this->anio).' '.$this->division,
+            get: fn () => self::etiquetaAnioGrado($this->nivel, $this->anio_grado).' '.$this->division,
         );
     }
 
-    protected static function etiquetaAnio(NivelEducativo $nivel, int $anio): string
+    protected static function etiquetaAnioGrado(NivelEducativo $nivel, int $anioGrado): string
     {
-        $etiquetas = match ($nivel) {
-            NivelEducativo::Primaria => ['1er grado', '2do grado', '3er grado', '4to grado', '5to grado', '6to grado'],
-            NivelEducativo::Secundaria => ['7mo grado', '8vo grado', '9no grado', '1er año', '2do año', '3er año'],
-        };
-
-        return $etiquetas[$anio - 1] ?? "{$anio}°";
+        return $nivel->etiquetasAnioGrado()[$anioGrado - 1] ?? "{$anioGrado}°";
     }
 }

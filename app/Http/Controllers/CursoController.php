@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\NivelEducativo;
 use App\Http\Requests\StoreCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
 use App\Models\CicloLectivo;
@@ -21,15 +22,20 @@ class CursoController extends Controller
      */
     public function index(Request $request): Response
     {
-        $cicloLectivoId = $request->integer('ciclo_lectivo_id') ?: null;
+        $cicloLectivoId = match (true) {
+            ! $request->has('ciclo_lectivo_id') => CicloLectivo::where('activo', true)->value('id'),
+            $request->input('ciclo_lectivo_id') === 'todos' => null,
+            default => $request->integer('ciclo_lectivo_id') ?: null,
+        };
 
         $cursos = Curso::query()
             ->with('cicloLectivo')
             ->when($cicloLectivoId, fn ($query) => $query->where('ciclo_lectivo_id', $cicloLectivoId))
             ->orderByDesc('ciclo_lectivo_id')
-            ->orderBy('anio')
+            ->orderBy('nivel')
+            ->orderBy('anio_grado')
             ->orderBy('division')
-            ->paginate(15)
+            ->paginate(24)
             ->withQueryString();
 
         return Inertia::render('cursos/Index', [
@@ -46,6 +52,7 @@ class CursoController extends Controller
     {
         return Inertia::render('cursos/Create', [
             'ciclosLectivos' => CicloLectivo::orderByDesc('anio')->get(['id', 'anio']),
+            'etiquetasAnioPorNivel' => $this->etiquetasAnioPorNivel(),
         ]);
     }
 
@@ -94,7 +101,21 @@ class CursoController extends Controller
                 ->get(['id', 'nombre']),
             'profesoresAsignados' => Profesor::whereIn('id', $profesorIdsAsignados)
                 ->get(['id', 'nombre', 'apellido']),
+            'etiquetasAnioPorNivel' => $this->etiquetasAnioPorNivel(),
         ]);
+    }
+
+    /**
+     * Etiquetas del año/grado (1-6) para cada nivel educativo, usadas para poblar
+     * el select de "Año" sin duplicar la nomenclatura en el frontend.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function etiquetasAnioPorNivel(): array
+    {
+        return collect(NivelEducativo::cases())
+            ->mapWithKeys(fn (NivelEducativo $nivel) => [$nivel->value => $nivel->etiquetasAnioGrado()])
+            ->all();
     }
 
     /**

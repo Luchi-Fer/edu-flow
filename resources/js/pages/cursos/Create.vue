@@ -7,11 +7,11 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ETIQUETAS_ANIO_POR_NIVEL } from '@/lib/nivelEducativo';
 import type { CicloLectivo } from '@/types';
 
-defineProps<{
+const props = defineProps<{
     ciclosLectivos: CicloLectivo[];
+    etiquetasAnioPorNivel: Record<'primaria' | 'secundaria', string[]>;
 }>();
 
 defineOptions({
@@ -27,7 +27,7 @@ const selectClass =
     'h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm';
 
 const nivel = ref<'primaria' | 'secundaria'>('primaria');
-const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
+const etiquetasAnioGrado = computed(() => props.etiquetasAnioPorNivel[nivel.value]);
 </script>
 
 <template>
@@ -80,20 +80,25 @@ const etiquetasAnio = computed(() => ETIQUETAS_ANIO_POR_NIVEL[nivel.value]);
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="anio">Año</Label>
-                    <select id="anio" name="anio" required :class="selectClass">
+                    <Label for="anio_grado">Año</Label>
+                    <select
+                        id="anio_grado"
+                        name="anio_grado"
+                        required
+                        :class="selectClass"
+                    >
                         <option value="" disabled selected>
                             Seleccionar...
                         </option>
                         <option
-                            v-for="(etiqueta, indice) in etiquetasAnio"
+                            v-for="(etiqueta, indice) in etiquetasAnioGrado"
                             :key="etiqueta"
                             :value="indice + 1"
                         >
                             {{ etiqueta }}
                         </option>
                     </select>
-                    <InputError :message="errors.anio" />
+                    <InputError :message="errors.anio_grado" />
                 </div>
 
                 <div class="grid gap-2">
