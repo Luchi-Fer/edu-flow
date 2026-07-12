@@ -19,6 +19,8 @@ class AsistenciaController extends Controller
      */
     public function show(Request $request, Curso $curso): Response
     {
+        $this->autorizarAcceso($request, $curso);
+
         $fecha = $request->date('fecha')?->toDateString() ?? today()->toDateString();
 
         $matriculas = Matricula::where('curso_id', $curso->id)
@@ -58,6 +60,8 @@ class AsistenciaController extends Controller
      */
     public function store(StoreAsistenciaRequest $request, Curso $curso): RedirectResponse
     {
+        $this->autorizarAcceso($request, $curso);
+
         $data = $request->validated();
 
         $matriculaIds = Matricula::where('curso_id', $curso->id)
@@ -89,5 +93,20 @@ class AsistenciaController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Asistencia guardada.')]);
 
         return redirect()->route('cursos.asistencia.show', ['curso' => $curso, 'fecha' => $data['fecha']]);
+    }
+
+    /**
+     * Only allow access to the curso's asistencia when the user can see every
+     * curso, or is a preceptor assigned to this specific curso.
+     */
+    private function autorizarAcceso(Request $request, Curso $curso): void
+    {
+        $user = $request->user();
+
+        abort_unless(
+            $user->can('ver-todos-los-cursos')
+                || $curso->preceptores()->where('preceptores.id', $user->preceptor?->id)->exists(),
+            403,
+        );
     }
 }

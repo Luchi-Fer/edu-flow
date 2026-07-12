@@ -157,4 +157,20 @@ class AlumnoControllerTest extends TestCase
         $response->assertRedirect(route('alumnos.index'));
         $this->assertDatabaseMissing('alumnos', ['id' => $alumno->id]);
     }
+
+    public function test_cannot_delete_an_alumno_with_matriculas()
+    {
+        $this->actingAsAdministrador();
+        $alumno = Alumno::factory()->create();
+        $curso = Curso::factory()->create();
+        $curso->alumnos()->attach($alumno->id, [
+            'fecha_matriculacion' => '2026-03-01',
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->delete(route('alumnos.destroy', $alumno));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('alumnos', ['id' => $alumno->id]);
+    }
 }

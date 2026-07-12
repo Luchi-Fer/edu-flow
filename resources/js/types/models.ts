@@ -35,6 +35,25 @@ export type Profesor = {
     };
 };
 
+export type Preceptor = {
+    id: number;
+    dni: string;
+    apellido: string;
+    nombre: string;
+    fecha_nacimiento: string;
+    direccion: string | null;
+    telefono: string | null;
+    fecha_ingreso: string;
+    activo: boolean;
+    created_at: string;
+    updated_at: string;
+    user: {
+        id: number;
+        name: string;
+        email: string;
+    };
+};
+
 export type Usuario = {
     id: number;
     name: string;

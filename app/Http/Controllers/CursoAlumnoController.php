@@ -6,6 +6,7 @@ use App\Enums\EstadoMatricula;
 use App\Http\Requests\StoreMatriculaRequest;
 use App\Http\Requests\UpdateMatriculaRequest;
 use App\Models\Alumno;
+use App\Models\Asistencia;
 use App\Models\Curso;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -74,6 +75,12 @@ class CursoAlumnoController extends Controller
      */
     public function destroy(Curso $curso, Alumno $alumno): RedirectResponse
     {
+        $matricula = $curso->matriculas()->where('alumno_id', $alumno->id)->first();
+
+        if ($matricula && Asistencia::where('matricula_id', $matricula->id)->exists()) {
+            return $this->denegarEliminacion(__('No se puede quitar la matrícula: el alumno tiene asistencias registradas en este curso.'));
+        }
+
         $curso->alumnos()->detach($alumno->id);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Matrícula eliminada.')]);

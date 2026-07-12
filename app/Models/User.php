@@ -65,4 +65,12 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasOne(Alumno::class);
     }
+
+    /**
+     * @return HasOne<Preceptor, $this>
+     */
+    public function preceptor(): HasOne
+    {
+        return $this->hasOne(Preceptor::class);
+    }
 }

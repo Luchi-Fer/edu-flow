@@ -6,6 +6,7 @@ import {
     Layers,
     LayoutGrid,
     Library,
+    ShieldCheck,
     UserCog,
     Users,
 } from '@lucide/vue';
@@ -14,6 +15,7 @@ import AlumnoController from '@/actions/App/Http/Controllers/AlumnoController';
 import CicloLectivoController from '@/actions/App/Http/Controllers/CicloLectivoController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import MateriaController from '@/actions/App/Http/Controllers/MateriaController';
+import PreceptorController from '@/actions/App/Http/Controllers/PreceptorController';
 import ProfesorController from '@/actions/App/Http/Controllers/ProfesorController';
 import UsuarioController from '@/actions/App/Http/Controllers/UsuarioController';
 import AppLogo from '@/components/AppLogo.vue';
@@ -54,6 +56,15 @@ const mainNavItems = computed<NavItem[]>(() => [
                   title: 'Profesores',
                   href: ProfesorController.index(),
                   icon: Users,
+              },
+          ]
+        : []),
+    ...(page.props.can['gestionar-preceptores']
+        ? [
+              {
+                  title: 'Preceptores',
+                  href: PreceptorController.index(),
+                  icon: ShieldCheck,
               },
           ]
         : []),

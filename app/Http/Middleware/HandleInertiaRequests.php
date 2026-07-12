@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'gestionar-usuarios' => $request->user()?->can('gestionar-usuarios') ?? false,
                 'gestionar-alumnos' => $request->user()?->can('gestionar-alumnos') ?? false,
                 'gestionar-profesores' => $request->user()?->can('gestionar-profesores') ?? false,
+                'gestionar-preceptores' => $request->user()?->can('gestionar-preceptores') ?? false,
                 'gestionar-materias' => $request->user()?->can('gestionar-materias') ?? false,
                 'gestionar-cursos' => $request->user()?->can('gestionar-cursos') ?? false,
                 'tomar-asistencia' => $request->user()?->can('tomar-asistencia') ?? false,

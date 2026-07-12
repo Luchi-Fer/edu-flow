@@ -84,6 +84,10 @@ class CicloLectivoController extends Controller
      */
     public function destroy(CicloLectivo $ciclo_lectivo): RedirectResponse
     {
+        if ($ciclo_lectivo->cursos()->exists()) {
+            return $this->denegarEliminacion(__('No se puede eliminar el ciclo lectivo: tiene cursos asociados.'));
+        }
+
         $ciclo_lectivo->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Ciclo lectivo eliminado.')]);

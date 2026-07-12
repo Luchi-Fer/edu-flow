@@ -17,6 +17,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'gestionar-usuarios',
             'gestionar-alumnos',
             'gestionar-profesores',
+            'gestionar-preceptores',
             'gestionar-materias',
             'gestionar-cursos',
             'ver-cursos',
@@ -34,6 +35,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $administrador->syncPermissions([
             'gestionar-alumnos',
             'gestionar-profesores',
+            'gestionar-preceptores',
             'gestionar-materias',
             'gestionar-cursos',
             'ver-cursos',

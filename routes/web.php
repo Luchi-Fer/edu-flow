@@ -6,8 +6,10 @@ use App\Http\Controllers\CicloLectivoController;
 use App\Http\Controllers\CursoAlumnoController;
 use App\Http\Controllers\CursoController;
 use App\Http\Controllers\CursoMateriaController;
+use App\Http\Controllers\CursoPreceptorController;
 use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\MateriaController;
+use App\Http\Controllers\PreceptorController;
 use App\Http\Controllers\ProfesorController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +34,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('profesores', ProfesorController::class)
         ->parameters(['profesores' => 'profesor'])
         ->middleware('can:gestionar-profesores');
+
+    Route::middleware('can:gestionar-preceptores')->group(function () {
+        Route::get('preceptores/buscar', [PreceptorController::class, 'buscar'])
+            ->name('preceptores.buscar');
+    });
+
+    Route::resource('preceptores', PreceptorController::class)
+        ->parameters(['preceptores' => 'preceptor'])
+        ->middleware('can:gestionar-preceptores');
 
     Route::resource('materias', MateriaController::class)
         ->except('show')
@@ -67,6 +78,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('cursos.alumnos.update');
         Route::delete('cursos/{curso}/alumnos/{alumno}', [CursoAlumnoController::class, 'destroy'])
             ->name('cursos.alumnos.destroy');
+
+        Route::get('cursos/{curso}/preceptores-disponibles', [CursoPreceptorController::class, 'disponibles'])
+            ->name('cursos.preceptores.disponibles');
+        Route::post('cursos/{curso}/preceptores', [CursoPreceptorController::class, 'store'])
+            ->name('cursos.preceptores.store');
+        Route::delete('cursos/{curso}/preceptores/{preceptor}', [CursoPreceptorController::class, 'destroy'])
+            ->name('cursos.preceptores.destroy');
     });
 
     Route::middleware('can:acceder-cursos')->group(function () {

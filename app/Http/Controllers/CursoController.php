@@ -22,6 +22,9 @@ class CursoController extends Controller
      */
     public function index(Request $request): Response
     {
+        $user = $request->user();
+        $verTodosLosCursos = $user->can('ver-todos-los-cursos');
+
         $cicloLectivoId = match (true) {
             ! $request->has('ciclo_lectivo_id') => CicloLectivo::where('activo', true)->value('id'),
             $request->input('ciclo_lectivo_id') === 'todos' => null,
@@ -30,6 +33,9 @@ class CursoController extends Controller
 
         $cursos = Curso::query()
             ->with('cicloLectivo')
+            ->when(! $verTodosLosCursos, function ($query) use ($user) {
+                $query->whereHas('preceptores', fn ($q) => $q->where('preceptores.id', $user->preceptor?->id));
+            })
             ->when($cicloLectivoId, fn ($query) => $query->where('ciclo_lectivo_id', $cicloLectivoId))
             ->orderByDesc('ciclo_lectivo_id')
             ->orderBy('nivel')
@@ -76,6 +82,7 @@ class CursoController extends Controller
         $curso->load([
             'materias' => fn ($query) => $query->orderBy('nombre'),
             'alumnos' => fn ($query) => $query->orderBy('apellido'),
+            'preceptores' => fn ($query) => $query->orderBy('apellido'),
         ]);
 
         $horariosPorCursoMateria = Horario::whereIn('curso_materia_id', $curso->materias->pluck('pivot.id'))
@@ -135,6 +142,10 @@ class CursoController extends Controller
      */
     public function destroy(Curso $curso): RedirectResponse
     {
+        if ($curso->matriculas()->exists()) {
+            return $this->denegarEliminacion(__('No se puede eliminar el curso: tiene alumnos matriculados.'));
+        }
+
         $curso->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Curso eliminado.')]);

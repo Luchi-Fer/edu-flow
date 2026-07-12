@@ -124,6 +124,10 @@ class AlumnoController extends Controller
      */
     public function destroy(Alumno $alumno): RedirectResponse
     {
+        if ($alumno->matriculas()->exists()) {
+            return $this->denegarEliminacion(__('No se puede eliminar el alumno: tiene matrículas registradas.'));
+        }
+
         $alumno->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Alumno eliminado.')]);

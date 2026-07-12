@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Alumno;
+use App\Models\Asistencia;
 use App\Models\Curso;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -171,6 +172,27 @@ class CursoAlumnoControllerTest extends TestCase
 
         $response->assertRedirect(route('cursos.edit', $curso));
         $this->assertDatabaseMissing('matriculas', [
+            'curso_id' => $curso->id,
+            'alumno_id' => $alumno->id,
+        ]);
+    }
+
+    public function test_cannot_remove_a_matricula_with_asistencias_registered()
+    {
+        $this->actingAsAdministrador();
+        $curso = Curso::factory()->create();
+        $alumno = Alumno::factory()->create();
+        $curso->alumnos()->attach($alumno->id, [
+            'fecha_matriculacion' => '2026-03-01',
+            'estado' => 'activo',
+        ]);
+        $matricula = $curso->matriculas()->where('alumno_id', $alumno->id)->first();
+        Asistencia::factory()->create(['matricula_id' => $matricula->id]);
+
+        $response = $this->delete(route('cursos.alumnos.destroy', [$curso, $alumno]));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('matriculas', [
             'curso_id' => $curso->id,
             'alumno_id' => $alumno->id,
         ]);

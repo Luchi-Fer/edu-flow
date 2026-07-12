@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Curso;
 use App\Models\Materia;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -93,5 +94,18 @@ class MateriaControllerTest extends TestCase
 
         $response->assertRedirect(route('materias.index'));
         $this->assertDatabaseMissing('materias', ['id' => $materia->id]);
+    }
+
+    public function test_cannot_delete_a_materia_assigned_to_a_curso()
+    {
+        $this->actingAsAdministrador();
+        $materia = Materia::factory()->create();
+        $curso = Curso::factory()->create();
+        $curso->materias()->attach($materia->id);
+
+        $response = $this->delete(route('materias.destroy', $materia));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('materias', ['id' => $materia->id]);
     }
 }

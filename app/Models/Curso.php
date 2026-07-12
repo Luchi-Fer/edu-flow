@@ -59,6 +59,14 @@ class Curso extends Model
     }
 
     /**
+     * @return BelongsToMany<Preceptor, $this>
+     */
+    public function preceptores(): BelongsToMany
+    {
+        return $this->belongsToMany(Preceptor::class, 'curso_preceptor')->withTimestamps();
+    }
+
+    /**
      * @return HasMany<Matricula, $this>
      */
     public function matriculas(): HasMany

@@ -32,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('acceder-cursos', fn (User $user) => $user->can('ver-cursos')
             || $user->can('gestionar-cursos')
             || $user->can('tomar-asistencia'));
+
+        Gate::define('ver-todos-los-cursos', fn (User $user) => $user->can('gestionar-cursos'));
     }
 
     /**

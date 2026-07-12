@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 import CursoAlumnoController from '@/actions/App/Http/Controllers/CursoAlumnoController';
 import CursoController from '@/actions/App/Http/Controllers/CursoController';
 import CursoMateriaController from '@/actions/App/Http/Controllers/CursoMateriaController';
+import CursoPreceptorController from '@/actions/App/Http/Controllers/CursoPreceptorController';
 import HorarioController from '@/actions/App/Http/Controllers/HorarioController';
 import ProfesorController from '@/actions/App/Http/Controllers/ProfesorController';
 import Heading from '@/components/Heading.vue';
@@ -31,7 +32,14 @@ import {
 } from '@/components/ui/select';
 import { useDateFormat } from '@/composables/useDateFormat';
 import { DIA_SEMANA_ABREVIADO, DIAS_SEMANA } from '@/lib/diaSemana';
-import type { Alumno, CicloLectivo, Curso, Materia, Profesor } from '@/types';
+import type {
+    Alumno,
+    CicloLectivo,
+    Curso,
+    Materia,
+    Preceptor,
+    Profesor,
+} from '@/types';
 
 type HorarioSlot = {
     id: number;
@@ -55,10 +63,13 @@ type AlumnoMatriculado = AlumnoOption & {
     };
 };
 
+type PreceptorAsignado = Pick<Preceptor, 'id' | 'nombre' | 'apellido'>;
+
 const props = defineProps<{
     curso: Curso & {
         materias: MateriaAsignada[];
         alumnos: AlumnoMatriculado[];
+        preceptores: PreceptorAsignado[];
     };
     ciclosLectivos: CicloLectivo[];
     materiasDisponibles: Pick<Materia, 'id' | 'nombre'>[];
@@ -133,7 +144,11 @@ const materiaSeleccionada = computed({
 
 const profesorParaAgregar = ref<number | null>(null);
 const alumnoParaMatricular = ref<number | null>(null);
+const preceptorParaAgregar = ref<number | null>(null);
 const profesorBuscarUrl = ProfesorController.buscar().url;
+const preceptorDisponiblesUrl = CursoPreceptorController.disponibles.url(
+    props.curso.id,
+);
 </script>
 
 <template>
@@ -150,7 +165,11 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
             <div class="grid grid-cols-5 gap-4">
                 <div class="grid gap-2">
                     <Label for="ciclo_lectivo_id">Ciclo lectivo</Label>
-                    <Select v-model="cicloLectivoId" name="ciclo_lectivo_id" required>
+                    <Select
+                        v-model="cicloLectivoId"
+                        name="ciclo_lectivo_id"
+                        required
+                    >
                         <SelectTrigger id="ciclo_lectivo_id" class="w-full">
                             <SelectValue />
                         </SelectTrigger>
@@ -533,7 +552,11 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
             >
                 <div class="grid flex-1 gap-2">
                     <Label for="materia_id">Materia</Label>
-                    <Select v-model="materiaSeleccionada" name="materia_id" required>
+                    <Select
+                        v-model="materiaSeleccionada"
+                        name="materia_id"
+                        required
+                    >
                         <SelectTrigger id="materia_id" class="w-full">
                             <SelectValue />
                         </SelectTrigger>
@@ -568,6 +591,113 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
             <p v-else class="text-sm text-muted-foreground">
                 Todas las materias ya están asignadas a este curso.
             </p>
+        </div>
+
+        <div class="max-w-5xl space-y-4 border-t pt-6">
+            <Heading
+                variant="small"
+                title="Preceptores asignados"
+                description="Preceptores a cargo de este curso, encargados de tomar asistencia"
+            />
+
+            <div class="overflow-hidden rounded-md border">
+                <table class="w-full text-sm">
+                    <thead class="bg-muted/50 text-left">
+                        <tr>
+                            <th class="px-4 py-2 font-medium">Preceptor</th>
+                            <th class="px-4 py-2 font-medium">
+                                <span class="sr-only">Acciones</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="preceptor in curso.preceptores"
+                            :key="preceptor.id"
+                            class="border-t"
+                        >
+                            <td class="px-4 py-2">
+                                {{ preceptor.apellido }}, {{ preceptor.nombre }}
+                            </td>
+                            <td class="px-4 py-2 text-right">
+                                <Dialog>
+                                    <DialogTrigger as-child>
+                                        <Button variant="destructive" size="sm">
+                                            Quitar
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <Form
+                                            v-bind="
+                                                CursoPreceptorController.destroy.form(
+                                                    [curso.id, preceptor.id],
+                                                )
+                                            "
+                                            :options="{ preserveScroll: true }"
+                                            v-slot="{ processing: removing }"
+                                        >
+                                            <DialogHeader class="space-y-3">
+                                                <DialogTitle>
+                                                    ¿Quitar a
+                                                    {{ preceptor.nombre }}
+                                                    {{ preceptor.apellido }} de
+                                                    este curso?
+                                                </DialogTitle>
+                                            </DialogHeader>
+
+                                            <DialogFooter class="mt-6 gap-2">
+                                                <DialogClose as-child>
+                                                    <Button variant="secondary">
+                                                        Cancelar
+                                                    </Button>
+                                                </DialogClose>
+
+                                                <Button
+                                                    type="submit"
+                                                    variant="destructive"
+                                                    :disabled="removing"
+                                                >
+                                                    Quitar
+                                                </Button>
+                                            </DialogFooter>
+                                        </Form>
+                                    </DialogContent>
+                                </Dialog>
+                            </td>
+                        </tr>
+                        <tr v-if="curso.preceptores.length === 0">
+                            <td
+                                colspan="2"
+                                class="px-4 py-6 text-center text-muted-foreground"
+                            >
+                                Todavía no hay preceptores asignados.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <Form
+                v-bind="CursoPreceptorController.store.form(curso.id)"
+                :options="{ preserveScroll: true }"
+                class="flex items-end gap-2"
+                v-slot="{ errors, processing: asignando }"
+                @success="preceptorParaAgregar = null"
+            >
+                <div class="grid flex-1 gap-2">
+                    <Label for="preceptor_id">Preceptor</Label>
+                    <SearchCombobox
+                        v-model="preceptorParaAgregar"
+                        name="preceptor_id"
+                        :search-url="preceptorDisponiblesUrl"
+                        placeholder="Buscar preceptor..."
+                        empty-text="No hay preceptores disponibles."
+                    />
+                    <InputError :message="errors.preceptor_id" />
+                </div>
+
+                <Button :disabled="asignando">Asignar</Button>
+            </Form>
         </div>
 
         <div class="max-w-5xl space-y-4 border-t pt-6">
@@ -616,7 +746,10 @@ const profesorBuscarUrl = ProfesorController.buscar().url;
                                             )
                                     "
                                 >
-                                    <SelectTrigger size="sm" class="w-full max-w-xs">
+                                    <SelectTrigger
+                                        size="sm"
+                                        class="w-full max-w-xs"
+                                    >
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>

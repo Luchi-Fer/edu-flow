@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CicloLectivo;
+use App\Models\Curso;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -97,5 +98,17 @@ class CicloLectivoControllerTest extends TestCase
 
         $response->assertRedirect(route('ciclos-lectivos.index'));
         $this->assertDatabaseMissing('ciclos_lectivos', ['id' => $ciclo->id]);
+    }
+
+    public function test_cannot_delete_a_ciclo_lectivo_with_cursos()
+    {
+        $this->actingAsAdministrador();
+        $ciclo = CicloLectivo::factory()->create();
+        Curso::factory()->create(['ciclo_lectivo_id' => $ciclo->id]);
+
+        $response = $this->delete(route('ciclos-lectivos.destroy', $ciclo));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('ciclos_lectivos', ['id' => $ciclo->id]);
     }
 }

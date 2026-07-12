@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\Alumno;
 use App\Models\CicloLectivo;
 use App\Models\Curso;
+use App\Models\Preceptor;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class CursoControllerTest extends TestCase
@@ -52,6 +55,37 @@ class CursoControllerTest extends TestCase
         Curso::factory()->count(3)->create();
 
         $this->get(route('cursos.index'))->assertOk();
+    }
+
+    public function test_preceptor_only_sees_cursos_assigned_to_them()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $user = User::factory()->create();
+        $user->assignRole('Preceptor');
+        $this->actingAs($user);
+
+        $preceptor = Preceptor::factory()->create(['user_id' => $user->id]);
+        $cursoAsignado = Curso::factory()->create();
+        Curso::factory()->create();
+        $preceptor->cursos()->attach($cursoAsignado->id);
+
+        $response = $this->get(route('cursos.index', ['ciclo_lectivo_id' => 'todos']));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('cursos.data', 1)
+            ->where('cursos.data.0.id', $cursoAsignado->id)
+        );
+    }
+
+    public function test_administrador_sees_every_curso_regardless_of_preceptor_assignments()
+    {
+        $this->actingAsAdministrador();
+        Curso::factory()->count(3)->create();
+
+        $response = $this->get(route('cursos.index', ['ciclo_lectivo_id' => 'todos']));
+
+        $response->assertInertia(fn (Assert $page) => $page->has('cursos.data', 3));
     }
 
     public function test_administrador_can_create_a_curso()
@@ -183,5 +217,21 @@ class CursoControllerTest extends TestCase
 
         $response->assertRedirect(route('cursos.index'));
         $this->assertDatabaseMissing('cursos', ['id' => $curso->id]);
+    }
+
+    public function test_cannot_delete_a_curso_with_alumnos_matriculados()
+    {
+        $this->actingAsAdministrador();
+        $curso = Curso::factory()->create();
+        $alumno = Alumno::factory()->create();
+        $curso->alumnos()->attach($alumno->id, [
+            'fecha_matriculacion' => '2026-03-01',
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->delete(route('cursos.destroy', $curso));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('cursos', ['id' => $curso->id]);
     }
 }

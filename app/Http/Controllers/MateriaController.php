@@ -80,6 +80,10 @@ class MateriaController extends Controller
      */
     public function destroy(Materia $materia): RedirectResponse
     {
+        if ($materia->cursos()->exists()) {
+            return $this->denegarEliminacion(__('No se puede eliminar la materia: está asignada a uno o más cursos.'));
+        }
+
         $materia->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Materia eliminada.')]);
