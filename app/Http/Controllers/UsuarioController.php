@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateUsuarioRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
@@ -14,7 +15,15 @@ use Spatie\Permission\Models\Role;
 class UsuarioController extends Controller
 {
     /**
-     * Display a listing of the internal users (not linked to a Profesor or Alumno).
+     * Roles that are assigned through their own CRUD (Profesor, Preceptor) and
+     * must never be assignable from this generic usuario form.
+     *
+     * @var array<int, string>
+     */
+    public const ROLES_CON_CRUD_PROPIO = ['Profesor', 'Preceptor'];
+
+    /**
+     * Display a listing of the internal users (not linked to a Profesor, Alumno or Preceptor).
      */
     public function index(Request $request): Response
     {
@@ -23,6 +32,7 @@ class UsuarioController extends Controller
         $usuarios = User::query()
             ->whereDoesntHave('profesor')
             ->whereDoesntHave('alumno')
+            ->whereDoesntHave('preceptor')
             ->with('roles')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
@@ -46,7 +56,7 @@ class UsuarioController extends Controller
     public function create(): Response
     {
         return Inertia::render('usuarios/Create', [
-            'roles' => Role::orderBy('name')->pluck('name'),
+            'roles' => $this->rolesAsignables(),
         ]);
     }
 
@@ -79,7 +89,7 @@ class UsuarioController extends Controller
 
         return Inertia::render('usuarios/Edit', [
             'usuario' => $usuario->load('roles'),
-            'roles' => Role::orderBy('name')->pluck('name'),
+            'roles' => $this->rolesAsignables(),
         ]);
     }
 
@@ -126,6 +136,22 @@ class UsuarioController extends Controller
      */
     protected function ensureManageable(User $usuario): void
     {
-        abort_if($usuario->profesor()->exists() || $usuario->alumno()->exists(), 404);
+        abort_if(
+            $usuario->profesor()->exists() || $usuario->alumno()->exists() || $usuario->preceptor()->exists(),
+            404
+        );
+    }
+
+    /**
+     * Roles that can be assigned from this generic usuario form, excluding those
+     * with their own CRUD (Profesor, Preceptor), which also create a linked record.
+     *
+     * @return Collection<int, string>
+     */
+    protected function rolesAsignables(): Collection
+    {
+        return Role::whereNotIn('name', self::ROLES_CON_CRUD_PROPIO)
+            ->orderBy('name')
+            ->pluck('name');
     }
 }

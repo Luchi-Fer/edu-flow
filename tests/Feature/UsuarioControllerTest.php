@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Alumno;
+use App\Models\Preceptor;
 use App\Models\Profesor;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -40,7 +41,7 @@ class UsuarioControllerTest extends TestCase
     public function test_root_can_list_usuarios()
     {
         $this->actingAsRoot();
-        User::factory()->create()->assignRole('Preceptor');
+        User::factory()->create()->assignRole('Administrador');
 
         $this->get(route('usuarios.index'))->assertOk();
     }
@@ -50,36 +51,52 @@ class UsuarioControllerTest extends TestCase
         $this->actingAsRoot();
 
         $response = $this->post(route('usuarios.store'), [
-            'name' => 'Nueva Preceptora',
-            'email' => 'preceptora@eduflow.test',
+            'name' => 'Nueva Administradora',
+            'email' => 'administradora@eduflow.test',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'role' => 'Administrador',
+        ]);
+
+        $response->assertRedirect(route('usuarios.index'));
+        $usuario = User::where('email', 'administradora@eduflow.test')->firstOrFail();
+        $this->assertTrue($usuario->hasRole('Administrador'));
+    }
+
+    public function test_roles_with_their_own_crud_cannot_be_assigned_here()
+    {
+        $this->actingAsRoot();
+
+        $response = $this->post(route('usuarios.store'), [
+            'name' => 'Preceptor Intruso',
+            'email' => 'intruso@eduflow.test',
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'role' => 'Preceptor',
         ]);
 
-        $response->assertRedirect(route('usuarios.index'));
-        $usuario = User::where('email', 'preceptora@eduflow.test')->firstOrFail();
-        $this->assertTrue($usuario->hasRole('Preceptor'));
+        $response->assertSessionHasErrors('role');
+        $this->assertDatabaseMissing('users', ['email' => 'intruso@eduflow.test']);
     }
 
     public function test_root_can_update_a_usuarios_role_and_password()
     {
         $root = $this->actingAsRoot();
         $usuario = User::factory()->create();
-        $usuario->assignRole('Preceptor');
+        $usuario->assignRole('Administrador');
 
         $response = $this->put(route('usuarios.update', $usuario), [
             'name' => $usuario->name,
             'email' => $usuario->email,
             'password' => 'newpassword123',
             'password_confirmation' => 'newpassword123',
-            'role' => 'Administrador',
+            'role' => 'Root',
         ]);
 
         $response->assertRedirect(route('usuarios.index'));
         $usuario->refresh();
-        $this->assertTrue($usuario->hasRole('Administrador'));
-        $this->assertFalse($usuario->hasRole('Preceptor'));
+        $this->assertTrue($usuario->hasRole('Root'));
+        $this->assertFalse($usuario->hasRole('Administrador'));
         $this->assertTrue(Hash::check('newpassword123', $usuario->password));
         $this->assertNotEquals($root->id, $usuario->id);
     }
@@ -88,12 +105,12 @@ class UsuarioControllerTest extends TestCase
     {
         $this->actingAsRoot();
         $usuario = User::factory()->create(['password' => bcrypt('original-password')]);
-        $usuario->assignRole('Preceptor');
+        $usuario->assignRole('Administrador');
 
         $this->put(route('usuarios.update', $usuario), [
             'name' => $usuario->name,
             'email' => $usuario->email,
-            'role' => 'Preceptor',
+            'role' => 'Administrador',
         ]);
 
         $this->assertTrue(Hash::check('original-password', $usuario->fresh()->password));
@@ -106,7 +123,7 @@ class UsuarioControllerTest extends TestCase
         $response = $this->put(route('usuarios.update', $root), [
             'name' => $root->name,
             'email' => $root->email,
-            'role' => 'Preceptor',
+            'role' => 'Administrador',
         ]);
 
         $response->assertSessionHasErrors('role');
@@ -125,7 +142,7 @@ class UsuarioControllerTest extends TestCase
     {
         $this->actingAsRoot();
         $usuario = User::factory()->create();
-        $usuario->assignRole('Preceptor');
+        $usuario->assignRole('Administrador');
 
         $response = $this->delete(route('usuarios.destroy', $usuario));
 
@@ -151,16 +168,28 @@ class UsuarioControllerTest extends TestCase
         $this->get(route('usuarios.edit', $user))->assertNotFound();
     }
 
-    public function test_index_excludes_usuarios_linked_to_a_profesor_or_alumno()
+    public function test_usuarios_linked_to_a_preceptor_are_not_manageable_here()
+    {
+        $this->actingAsRoot();
+        $preceptor = Preceptor::factory()->create();
+
+        $this->get(route('usuarios.edit', $preceptor->user))->assertNotFound();
+        $this->delete(route('usuarios.destroy', $preceptor->user))->assertNotFound();
+    }
+
+    public function test_index_excludes_usuarios_linked_to_a_profesor_alumno_or_preceptor()
     {
         $this->actingAsRoot();
         $profesor = Profesor::factory()->create();
+        $preceptor = Preceptor::factory()->create();
 
         $response = $this->get(route('usuarios.index'));
 
         $response->assertInertia(fn (Assert $page) => $page->where(
             'usuarios.data',
-            fn (mixed $usuarios) => collect($usuarios)->doesntContain(fn (array $u) => $u['id'] === $profesor->user_id),
+            fn (mixed $usuarios) => collect($usuarios)->doesntContain(
+                fn (array $u) => in_array($u['id'], [$profesor->user_id, $preceptor->user_id], true),
+            ),
         ));
     }
 }

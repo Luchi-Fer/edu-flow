@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Controllers\UsuarioController;
 use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -29,7 +30,7 @@ class UpdateUsuarioRequest extends FormRequest
             'role' => [
                 'required',
                 'string',
-                Rule::in(Role::pluck('name')),
+                Rule::in(Role::whereNotIn('name', UsuarioController::ROLES_CON_CRUD_PROPIO)->pluck('name')),
                 function (string $attribute, mixed $value, Closure $fail): void {
                     $esUnoMismo = $this->usuario->id === $this->user()->id;
                     $rolActual = $this->usuario->getRoleNames()->first();

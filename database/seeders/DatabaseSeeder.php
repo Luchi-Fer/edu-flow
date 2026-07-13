@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Preceptor;
 use App\Models\Profesor;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -27,8 +28,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->crearUsuariosConRol('Administrador', 2);
-        $this->crearUsuariosConRol('Preceptor', 2);
         $this->crearProfesores(6);
+        $this->crearPreceptores(2);
 
         $this->call(AlumnoSeeder::class);
         $this->call(MateriaSeeder::class);
@@ -70,6 +71,36 @@ class DatabaseSeeder extends Seeder
             $user->assignRole('Profesor');
 
             Profesor::create([
+                'user_id' => $user->id,
+                'dni' => fake()->unique()->numerify('########'),
+                'apellido' => $apellido,
+                'nombre' => $nombre,
+                'fecha_nacimiento' => fake()->dateTimeBetween('-60 years', '-25 years'),
+                'telefono' => fake()->phoneNumber(),
+                'direccion' => fake()->address(),
+                'fecha_ingreso' => fake()->dateTimeBetween('-15 years', 'now'),
+                'activo' => true,
+            ]);
+        }
+    }
+
+    /**
+     * Create demo preceptores (with their associated user account), emailed as preceptor@test.com, preceptor2@test.com, ...
+     */
+    protected function crearPreceptores(int $cantidad): void
+    {
+        for ($i = 1; $i <= $cantidad; $i++) {
+            $nombre = fake()->firstName();
+            $apellido = fake()->lastName();
+
+            $user = User::factory()->create([
+                'name' => "{$nombre} {$apellido}",
+                'email' => 'preceptor'.($i > 1 ? $i : '').'@test.com',
+            ]);
+
+            $user->assignRole('Preceptor');
+
+            Preceptor::create([
                 'user_id' => $user->id,
                 'dni' => fake()->unique()->numerify('########'),
                 'apellido' => $apellido,
